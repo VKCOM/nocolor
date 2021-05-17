@@ -11,10 +11,10 @@ Pay attention to the `--index-only-files` flag, it sets paths to **files that do
 ### Flags
 
 - `--palette` — path to the file with the palette. The default is `palette.yaml`;
+- `--tag` — the tag to be used to set the color in phpdoc; The default is `color`;
 - `--index-only-files` — comma-separated list of paths to files, which should be **indexed**, but **not analyzed**. It is used to specify folders that contain *definitions of functions, classes, etc.*, which is **important for correct analysis**, but the files themselves do not need to be analyzed;
-- `--php-extensions` — comma-separated list of PHP extensions to be analyzed. By default it is equal
-  to `php, inc, php5, phtml`;
-- `--cache-dir` — path to the directory where the cache will be saved. The default is `$TMP/nocolor-cache`. The cache allows you to analyze the project **much faster**, since a large stage of data collection is skipped;
+- `--php-extensions` — comma-separated list of PHP extensions to be analyzed. The default is `php, inc, php5, phtml`;
+- `--cache-dir` — path to the directory where the cache will be saved. The cache allows you to analyze the project **much faster**, since a large stage of data collection is skipped. The default is `$TMP/nocolor-cache`;
 - `--disable-cache` — flag to disable caching;
 - `--cores` — maximum number of threads for analysis. By default, it is equal to the number of processor threads;
 - And some others for debugging.

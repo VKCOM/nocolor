@@ -15,20 +15,19 @@ import (
 
 type ExtraCheckFlags struct {
 	PaletteSrc string
+	ColorTag   string
 }
 
-func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext, pal *palette.Palette) (status int, err error) {
+func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext) (status int, err error) {
 	flags := ctx.CustomFlags.(*ExtraCheckFlags)
 
-	// We need to open the palette at the very beginning,
-	// since during the analysis it should already be initialized,
-	// since phpdoc colors is parsed during the function traversal.
-	paletteFromFile, err := palette.OpenPaletteFromFile(flags.PaletteSrc)
+	pal, err := palette.OpenPaletteFromFile(flags.PaletteSrc)
 	if err != nil {
 		return 1, err
 	}
 
-	*pal = *paletteFromFile
+	// Registering custom walkers for collecting the call graph.
+	walkers.Register(ctx.MainConfig.LinterConfig, globalContext, pal, flags.ColorTag)
 
 	// If there are no arguments, then we interpret this as
 	// an analysis of the current directory.

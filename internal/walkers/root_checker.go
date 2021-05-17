@@ -26,13 +26,16 @@ type RootChecker struct {
 
 	fileFunction       *symbols.Function
 	currentClassColors palette.ColorContainer
+
+	colorTag string
 }
 
-func NewRootChecker(palette *palette.Palette, globalCtx *GlobalContext, ctx *linter.RootContext) *RootChecker {
+func NewRootChecker(palette *palette.Palette, globalCtx *GlobalContext, ctx *linter.RootContext, colorTag string) *RootChecker {
 	return &RootChecker{
 		ctx:       ctx,
 		palette:   palette,
 		globalCtx: globalCtx,
+		colorTag:  colorTag,
 	}
 }
 
@@ -203,7 +206,7 @@ func (r *RootChecker) phpDocToColors(comment phpdoc.Comment) (palette.ColorConta
 			continue
 		}
 
-		if p.Name() != "color" && p.Name() != "kphp-color" {
+		if p.Name() != r.colorTag {
 			continue
 		}
 

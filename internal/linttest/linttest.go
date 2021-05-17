@@ -67,7 +67,7 @@ func (s *Suite) RunLinter() []*pipes.Report {
 
 	globalContext := walkers.NewGlobalContext(s.linter.MetaInfo())
 	pal := palette.NewPalette()
-	walkers.Register(s.config, globalContext, pal)
+	walkers.Register(s.config, globalContext, pal, "color")
 
 	var err error
 	paletteFromFile, err := palette.ReadPaletteFileYAML([]byte(s.Palette))

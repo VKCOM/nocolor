@@ -11,7 +11,6 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 
 	"github.com/vkcom/nocolor/internal/checkers"
-	"github.com/vkcom/nocolor/internal/palette"
 	"github.com/vkcom/nocolor/internal/walkers"
 )
 
@@ -47,9 +46,6 @@ func DefaultCacheDir() string {
 func Main() {
 	config := linter.NewConfig()
 	context := walkers.NewGlobalContext(nil)
-	pal := palette.NewPalette()
-
-	walkers.Register(config, context, pal)
 
 	status, err := cmd.Run(&cmd.MainConfig{
 		BeforeReport:             disableAllDefaultReports,
@@ -103,12 +99,13 @@ func Main() {
 					ctx.ParsedFlags.ReportsCritical = cmd.AllNonNoticeChecks
 
 					fs.StringVar(&flags.PaletteSrc, "palette", "palette.yaml", "File with color palette")
+					fs.StringVar(&flags.ColorTag, "tag", "color", "The tag to be used to set the color in phpdoc")
 
 					ctx.CustomFlags = flags
 					return fs
 				},
 				Action: func(ctx *cmd.AppContext) (int, error) {
-					return Check(ctx, context, pal)
+					return Check(ctx, context)
 				},
 			})
 		},
