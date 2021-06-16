@@ -17,10 +17,10 @@ import (
 //
 // These chains are left-to-right, e.g. colored f1 -> f2 -> f3,
 // we find and check f1, then f1 -> f2, then f1 -> f2 -> f3.
-func CheckColorsInGraph(graph *callgraph.Graph, palette *palette.Palette) []*Report {
+func CheckColorsInGraph(graph *callgraph.Graph, palette *palette.Palette) []*ColorReport {
 	roots := FindRootNodes(graph)
 
-	var reports []*Report
+	var reports []*ColorReport
 	checker := newCheckerFunctionsColors(graph, palette)
 	for _, root := range roots {
 		callstack := callgraph.NewCallstackOfColoredFunctions()
@@ -79,7 +79,7 @@ func newCheckerFunctionsColors(callGraph *callgraph.Graph, palette *palette.Pale
 	}
 }
 
-func (c *checkerFunctionsColors) checkFuncDFS(callstack *callgraph.CallstackOfColoredFunctions, graph *callgraph.Graph, node *callgraph.Node) (reports []*Report) {
+func (c *checkerFunctionsColors) checkFuncDFS(callstack *callgraph.CallstackOfColoredFunctions, graph *callgraph.Graph, node *callgraph.Node) (reports []*ColorReport) {
 	callstack.Append(node)
 
 	wasAnyError := false
@@ -210,7 +210,7 @@ func (c *checkerFunctionsColors) findCallstackBetweenTwoFunctionsBFS(from, targe
 	return revCallstack
 }
 
-func (c *checkerFunctionsColors) errorOnRuleBroken(callstack *callgraph.CallstackOfColoredFunctions, rule *palette.Rule) *Report {
+func (c *checkerFunctionsColors) errorOnRuleBroken(callstack *callgraph.CallstackOfColoredFunctions, rule *palette.Rule) *ColorReport {
 	if len(c.shownErrors) > maxShownErrorsCount {
 		return nil
 	}
@@ -269,9 +269,10 @@ func (c *checkerFunctionsColors) errorOnRuleBroken(callstack *callgraph.Callstac
 	message := cfmt.Sprintf("{{%s}}::cyan => {{%s}}::red\n  This color rule is broken, call chain:\n%s",
 		rule.String(c.palette), rule.Error, callstackStr)
 
-	return &Report{
+	return &ColorReport{
 		Rule:      rule,
 		CallChain: callChainToShow,
 		Message:   message,
+		Palette:   c.palette,
 	}
 }

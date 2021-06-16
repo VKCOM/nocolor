@@ -15,6 +15,7 @@ Pay attention to the `--index-only-files` flag, it sets paths to **files that do
 - `--palette` — path to the file with the palette. The default is `palette.yaml`;
 - `--tag` — the tag to be used to set the color in PHPDoc; The default is `color`;
 - `--index-only-files` — comma-separated list of paths to files, which should be **indexed**, but **not analyzed**. It is used to specify folders that contain *definitions of functions, classes, etc.*, which is **important for correct analysis**, but the files themselves do not need to be analyzed;
+- `--output` — path to the file where the errors will be written in JSON format;
 - `--php-extensions` — comma-separated list of PHP extensions to be analyzed. The default is `php, inc, php5, phtml`;
 - `--cache-dir` — path to the directory where the cache will be saved. The cache allows you to analyze the project **much faster**, since a large stage of data collection is skipped. The default is `$TMP/nocolor-cache`;
 - `--disable-cache` — flag to disable caching. The default is `false`;
@@ -32,7 +33,7 @@ After the flags, you can specify several folders or files for analysis.
 For example:
 
 ```sh
-$ nocolor check --cores=4 --php-extensions="php" ./folder1 ./folder2 ./folder3/file.php
+$ nocolor check --cores=4 --output="reports.json" ./folder1 ./folder2 ./folder3/file.php
 ```
 
 If no folders or files are specified, the current folder is analyzed. This is identical with the call with `./`:

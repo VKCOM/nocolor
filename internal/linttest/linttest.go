@@ -62,7 +62,7 @@ func (s *Suite) AddNamedFile(name, contents string) {
 
 // RunLinter executes linter over s Files and returns all issue reports
 // that were produced during that.
-func (s *Suite) RunLinter() []*pipes.Report {
+func (s *Suite) RunLinter() []*pipes.ColorReport {
 	s.t.Helper()
 
 	globalContext := walkers.NewGlobalContext(s.linter.MetaInfo())
@@ -122,7 +122,7 @@ func (s *Suite) RunAndMatch() {
 //
 // If expect slice is nil or empty, only nil (or empty) reports
 // slice would match it.
-func (s *Suite) Match(reports []*pipes.Report) {
+func (s *Suite) Match(reports []*pipes.ColorReport) {
 	expect := s.Expect
 	t := s.t
 
@@ -138,7 +138,7 @@ func (s *Suite) Match(reports []*pipes.Report) {
 			len(expect), len(reports))
 	}
 
-	matchedReports := map[*pipes.Report]bool{}
+	matchedReports := map[*pipes.ColorReport]bool{}
 	usedMatchers := map[int]bool{}
 	for _, r := range reports {
 		have := r.Message

@@ -219,13 +219,13 @@ func (r *RootChecker) phpDocToColors(comment phpdoc.Comment) (palette.ColorConta
 		}
 
 		if len(p.Params) == 0 {
-			return palette.ColorContainer{}, fmt.Errorf("an empty tag value")
+			return palette.ColorContainer{}, fmt.Errorf("An empty '@%s' tag value", p.Name())
 		}
 
 		colorName := p.Params[0]
 
 		if !r.palette.ColorExists(colorName) {
-			return palette.ColorContainer{}, fmt.Errorf("color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName)
+			return palette.ColorContainer{}, fmt.Errorf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName)
 		}
 
 		colors.Add(r.palette.GetColorByName(colorName))

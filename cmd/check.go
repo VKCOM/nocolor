@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 
 	"github.com/VKCOM/noverify/src/cmd"
-
+	"github.com/VKCOM/noverify/src/linter"
 	"github.com/vkcom/nocolor/internal/callgraph"
 	"github.com/vkcom/nocolor/internal/palette"
 	"github.com/vkcom/nocolor/internal/pipes"
@@ -16,6 +18,7 @@ import (
 type extraCheckFlags struct {
 	PaletteSrc string
 	ColorTag   string
+	Output     string
 }
 
 // Check is the function that starts the analysis of the project.
@@ -38,9 +41,10 @@ func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext) (status in
 
 	// The main function for analyzing in NoVerify,
 	// in it we collect all the functions of the project.
-	status, err = cmd.Check(ctx)
-	if err != nil {
-		return status, err
+	_, err = cmd.Check(ctx)
+	if len(LinterReports) != 0 {
+		HandleShowLinterReports(ctx, LinterReports)
+		return 2, err
 	}
 
 	// If the status is not zero, it means that there are
@@ -55,10 +59,7 @@ func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext) (status in
 	reports := HandleFunctions(ctx, globalContext.Functions, pal)
 
 	if len(reports) != 0 {
-		for _, report := range reports {
-			fmt.Println(report)
-		}
-		log.Printf("Found %d critical reports\n", len(reports))
+		HandleShowColorReports(ctx, reports)
 		return 2, nil
 	}
 
@@ -67,9 +68,9 @@ func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext) (status in
 }
 
 // HandleFunctions is a function that starts checking colors.
-func HandleFunctions(ctx *cmd.AppContext, funcs *symbols.Functions, palette *palette.Palette) []*pipes.Report {
+func HandleFunctions(ctx *cmd.AppContext, funcs *symbols.Functions, palette *palette.Palette) []*pipes.ColorReport {
 	workers := ctx.ParsedFlags.MaxConcurrency
-	reportsCh := make(chan []*pipes.Report, 10)
+	reportsCh := make(chan []*pipes.ColorReport, 10)
 	graphsCh := make(chan *callgraph.Graph, 10)
 
 	nodes := pipes.FunctionsToNodes(funcs)
@@ -77,7 +78,7 @@ func HandleFunctions(ctx *cmd.AppContext, funcs *symbols.Functions, palette *pal
 
 	pipes.WriteGraphsAsync(graphs, graphsCh)
 
-	pipes.Async(workers, graphsCh, reportsCh, func(graph *callgraph.Graph) []*pipes.Report {
+	pipes.Async(workers, graphsCh, reportsCh, func(graph *callgraph.Graph) []*pipes.ColorReport {
 		pipes.EraseNodesWithRemoverColor(graph)
 		pipes.CalcNextWithColor(graph)
 
@@ -86,4 +87,47 @@ func HandleFunctions(ctx *cmd.AppContext, funcs *symbols.Functions, palette *pal
 	})
 
 	return pipes.ReadReportsSync(reportsCh)
+}
+
+func HandleShowColorReports(ctx *cmd.AppContext, reports []*pipes.ColorReport) {
+	generalReports := make([]*pipes.GeneralReport, 0, len(reports))
+	for _, report := range reports {
+		generalReports = append(generalReports, pipes.NewGeneralReportFromColorReport(report))
+	}
+	handleShowReports(ctx, generalReports)
+}
+
+func HandleShowLinterReports(ctx *cmd.AppContext, reports []*linter.Report) {
+	generalReports := make([]*pipes.GeneralReport, 0, len(reports))
+	for _, report := range reports {
+		generalReports = append(generalReports, pipes.NewGeneralReportFromLinterReport(report))
+	}
+	handleShowReports(ctx, generalReports)
+}
+
+func handleShowReports(ctx *cmd.AppContext, reports []*pipes.GeneralReport) {
+	flags := ctx.CustomFlags.(*extraCheckFlags)
+	toJSON := flags.Output != ""
+	if toJSON {
+		fileName := flags.Output
+		data, err := json.Marshal(reports)
+		if err != nil {
+			log.Printf("Error marshal json: %v", err)
+			return
+		}
+		err = ioutil.WriteFile(fileName, data, 0644)
+		if err != nil {
+			log.Printf("Error write json: %v", err)
+			return
+		}
+
+		log.Printf("Found %d critical reports\n", len(reports))
+		log.Printf("Reports are written to the '%s' file\n", fileName)
+		return
+	}
+
+	for _, report := range reports {
+		fmt.Println(report)
+	}
+	log.Printf("Found %d critical reports\n", len(reports))
 }
