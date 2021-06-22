@@ -1,4 +1,4 @@
-package tests
+package rules
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/vkcom/nocolor/internal/linttest"
 )
 
-func TestResumable(t *testing.T) {
+func TestResumableFail(t *testing.T) {
 	suite := linttest.NewSuite(t)
 
 	suite.Palette = `
@@ -29,7 +29,7 @@ function api() {
 
 function resum() {
     sched_yield();
-    // resum2();
+    resum2();
     return null;
 }
 
@@ -50,6 +50,14 @@ function callurl() { sched_yield(); 1; }
 init();
 init2();
 `)
+
+	suite.Expect = []string{
+		`
+api has-curl => curl from api
+  This color rule is broken, call chain:
+api@api -> resum -> resum2 -> callurl@has-curl
+`,
+	}
 
 	suite.RunAndMatch()
 }

@@ -1,4 +1,4 @@
-package tests
+package rules
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/vkcom/nocolor/internal/linttest"
 )
 
-func TestAlmostSame(t *testing.T) {
+func TestNotAllowedApiCurl(t *testing.T) {
 	suite := linttest.NewSuite(t)
 
 	suite.Palette = defaultPalette
@@ -15,14 +15,6 @@ func TestAlmostSame(t *testing.T) {
  * @color api
  */
 function api() {
-    api2();
-    hasCurl();
-}
-
-/**
- * @color api2
- */
-function api2() {
     hasCurl();
 }
 
@@ -40,17 +32,7 @@ api();
 		`
 api has-curl => Calling curl function from API functions
   This color rule is broken, call chain:
-api@api -> api2 -> hasCurl@has-curl
-`,
-		`
-api has-curl => Calling curl function from API functions
-  This color rule is broken, call chain:
 api@api -> hasCurl@has-curl
-`,
-		`
-api2 has-curl => Calling curl function from API2 functions
-  This color rule is broken, call chain:
-api2@api2 -> hasCurl@has-curl
 `,
 	}
 

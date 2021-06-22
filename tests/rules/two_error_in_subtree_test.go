@@ -1,4 +1,4 @@
-package tests
+package rules
 
 import (
 	"testing"

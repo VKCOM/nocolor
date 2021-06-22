@@ -1,19 +1,13 @@
-package tests
+package rules
 
 import (
 	"testing"
 
 	"github.com/vkcom/nocolor/internal/linttest"
-	"github.com/vkcom/nocolor/internal/palette"
 )
 
-func TestRecursiveMaxColorOk(t *testing.T) {
+func TestRecursive(t *testing.T) {
 	suite := linttest.NewSuite(t)
-
-	defer func(count int) {
-		palette.MaxColorsInMask = count
-	}(palette.MaxColorsInMask)
-	palette.MaxColorsInMask = 2
 
 	suite.Palette = `
 -
@@ -21,10 +15,9 @@ func TestRecursiveMaxColorOk(t *testing.T) {
   - "api has-curl please": ""
 `
 	suite.AddFile(`<?php
-function f1() { if(0) f2(); if(0) f3(); }
+function f1() { f2(); f3(); }
 /**
  * @color has-curl
- * @color please
  */
 function f2() { f10(); }
 /** @color api */
@@ -37,7 +30,15 @@ function f100() { [100]; f101(); }
 function f101() { [101]; f102(); }
 function f102() { [101]; f101(); }
 f1();
-`)
+	`)
+
+	suite.Expect = []string{
+		`
+api has-curl => dont call curl from api
+  This color rule is broken, call chain:
+f3@api -> f10 -> f11 -> f12 -> f1 -> f2@has-curl
+`,
+	}
 
 	suite.RunAndMatch()
 }

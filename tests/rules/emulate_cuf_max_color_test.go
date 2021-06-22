@@ -1,13 +1,19 @@
-package tests
+package rules
 
 import (
 	"testing"
 
 	"github.com/vkcom/nocolor/internal/linttest"
+	"github.com/vkcom/nocolor/internal/palette"
 )
 
-func TestEmulateCuf(t *testing.T) {
+func TestEmulateCufMaxColor(t *testing.T) {
 	suite := linttest.NewSuite(t)
+
+	defer func(count int) {
+		palette.MaxColorsInMask = count
+	}(palette.MaxColorsInMask)
+	palette.MaxColorsInMask = 2
 
 	suite.Palette = `
 -
