@@ -74,6 +74,17 @@ func (r *GeneralReport) String() string {
 `, path, last.Pos.Line, last.HumanReadableName(), r.fullMessage)
 	}
 
+	path := r.File
+	wd, err := os.Getwd()
+	if err == nil {
+		path, err = filepath.Rel(wd, path)
+		if err != nil {
+			path = r.File
+		}
+	}
+
+	path = filepath.ToSlash(path)
+
 	return cfmt.Sprintf(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {{Error}}::red at the stage of collecting colors
    %s:%d
@@ -81,5 +92,5 @@ func (r *GeneralReport) String() string {
 
 %s
 
-`, r.File, r.Line, r.Context, r.Message)
+`, path, r.Line, r.Context, r.Message)
 }
