@@ -184,4 +184,4 @@ As a result, **NoColor** is not a replacement for **Deptrac**, but its addition 
 
 ## Next steps
 
-- [Description of the color concept](https://github.com/vkcom/nocolor/blob/master/docs/concept_of_colors.md)
+- [How to contribute](https://github.com/vkcom/nocolor/blob/master/docs/how_to_contribute.md)
