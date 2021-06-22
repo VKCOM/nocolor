@@ -20,7 +20,12 @@ type platformInfo struct {
 	goarch string
 }
 
-func (p platformInfo) String() string { return p.goos + "-" + p.goarch }
+func (p platformInfo) String() string {
+	if p.goos == "darwin" {
+		return "macos-" + p.goarch
+	}
+	return p.goos + "-" + p.goarch
+}
 
 func main() {
 	log.SetFlags(0)
