@@ -29,13 +29,13 @@ For example:
 
 class Service {
     public static function method() {
-        Controller::method(); // allowed in config
+        Controller::method();
     }
 }
 
 class Controller {
     public static function method() {
-        Repository::method(); // allowed in config
+        Repository::method();
     }
 }
 
@@ -45,6 +45,36 @@ class Repository {
     }
 }
 ```
+
+<details>
+  <summary>Deptrac config</summary>
+
+  ```yaml
+# depfile.yaml
+paths:
+  - ./
+exclude_files:
+  - '#.*test.*#'
+layers:
+  - name: Service
+    collectors:
+      - type: className
+        regex: .*Service.*
+  - name: Controller
+    collectors:
+      - type: className
+        regex: .*Controller.*
+  - name: Repository
+    collectors:
+      - type: className
+        regex: .*Repository.*
+ruleset:
+  Service:
+    - Controller
+  Controller:
+    - Repository
+  ```
+</details>
 
 Here the `Service` class depends on the `Repository` at a depth of 2 and therefore **Deptrac** does not find an error, although this dependency is not allowed in the config.
 
