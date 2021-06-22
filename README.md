@@ -23,7 +23,7 @@ See also a [plugin](https://github.com/vkcom/nocolor-phpstorm) for **PhpStorm** 
 
 ## Contributing
 
-Feel free to contribute to this project. See [How to contribute](https://github.com/vkcom/nocolor/blob/master/docs/how_to_contribute.md) for more information.
+Feel free to contribute to this project. See [CONTRIBUTING.md](https://github.com/vkcom/nocolor/blob/master/CONTRIBUTING.md) for more information.
 
 ## License
 

@@ -1,6 +1,33 @@
 # How to contribute
 
-We are very glad that you want to participate in the development of this tool. Below we describe how to build a project and test it.
+We are very glad that you want to participate in the development of this tool. There are several ways to help out:
+
+- Create an [issue](https://github.com/vkcom/nocolor/issues/) on GitHub, if you have found a bug or have an idea for a feature;
+- Write test cases for open bug issues;
+- Write patches for open bug/feature issues.
+
+There are a few guidelines that we need contributors to follow, so that we have a chance of keeping on top of things.
+
+- The code must follow the Go coding standard. A static analyzer will help you with this, which can be launched with one command (see the testing section below).
+
+- All commits should have the following structure:
+
+  ```
+  pkgs: short
+  
+  More complete description, if needed.
+  ```
+
+  Where: 
+
+  - `pkgs` is the name of the package or packages separated by commas in which the change occurred;
+  - `short` is a short description of changes starting with a lowercase letter and no punctuation marks at the end.
+
+- All code changes should be covered by unit tests.
+
+## A short description if you'd like to contribute by writing code
+
+Below we describe how to build a project and test it.
 
 ### Build
 
@@ -18,7 +45,7 @@ Go to the project folder:
 cd nocolor
 ```
 
-In order to build a project and get a binary file, run the following command:
+And run the following command:
 
 ```sh
 make build
@@ -42,7 +69,7 @@ All tests in the project are located in the `./tests` folder and are divided int
 
 - The `edges` folder contains tests that check the correctness of the constructed call graphs.
 
-#### Linter for go code
+#### Linter for source code
 
 To keep the code clean and correct, we use the static analyzer (linter) [`golangci-lint`](https://github.com/golangci/golangci-lint). Its configuration file is located at the root of the project with `.golangci.yml` name.
 
@@ -62,7 +89,7 @@ We do not use complicated methods for releases. Each release is created manually
 
 - Update the version in the `cmd/main.go` file;
 - Run the `make release` command, which creates archives with executable files for Linux, Windows, and macOS;
-- Create a new release, which describes the changes and uploads the archives;
+- Create a new release in GitHub, which describes the changes and uploads the archives;
 - Release.
 
 ## Brief description of project folders
