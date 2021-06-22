@@ -8,7 +8,7 @@ PKG=github.com/vkcom/nocolor/cmd
 build: clear
 	go build -ldflags "-X '$(PKG).BuildTime=$(NOW)' -X '$(PKG).BuildOSUname=$(OS)' -X '$(PKG).BuildCommit=$(AFTER_COMMIT)'" -o build/$(BIN_NAME)
 
-build-release:
+release:
 	go run ./_scripts/release.go -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
 
 check: lint test
