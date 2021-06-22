@@ -83,31 +83,32 @@ func Main() {
 			app.Commands = append(app.Commands, &cmd.Command{
 				Name:        "check",
 				Description: "The command to start checking files",
+				Arguments: []*cmd.Argument{
+					{
+						Name:        "targets",
+						Description: "Folders or files for analysis",
+					},
+				},
 				RegisterFlags: func(ctx *cmd.AppContext) *flag.FlagSet {
 					flags := &extraCheckFlags{}
 
 					fs := flag.NewFlagSet("check", flag.ContinueOnError)
 
 					// We don't need all the flags from NoVerify, so we only register some of them.
-					fs.StringVar(&ctx.ParsedFlags.IndexOnlyFiles, "index-only-files", "", "Comma-separated list of files to do indexing")
-					fs.BoolVar(&ctx.ParsedFlags.Debug, "debug", false, "Enable debug output")
-					fs.DurationVar(&ctx.ParsedFlags.DebugParseDuration, "debug-parse-duration", 0, "Print files that took longer than the specified time to analyse")
-					fs.IntVar(&ctx.ParsedFlags.MaxFileSize, "max-sum-filesize", 20*1024*1024, "Max total file size to be parsed concurrently in bytes (limits max memory consumption)")
-					fs.IntVar(&ctx.ParsedFlags.MaxConcurrency, "cores", runtime.NumCPU(), "Max cores")
-					fs.StringVar(&ctx.ParsedFlags.StubsDir, "stubs-dir", "", "Directory with phpstorm-stubs")
-					fs.StringVar(&ctx.ParsedFlags.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
+					fs.IntVar(&ctx.ParsedFlags.MaxFileSize, "max-sum-filesize", 10*1024*1024, "Max total file size to be parsed concurrently in bytes (limits max memory consumption)")
+					fs.IntVar(&ctx.ParsedFlags.MaxConcurrency, "cores", runtime.NumCPU(), "Max number of cores to use")
 					fs.BoolVar(&ctx.ParsedFlags.DisableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
-					fs.StringVar(&ctx.ParsedFlags.PprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
-					fs.StringVar(&ctx.ParsedFlags.CPUProfile, "cpuprofile", "", "Write cpu profile to `file`")
-					fs.StringVar(&ctx.ParsedFlags.MemProfile, "memprofile", "", "Write memory profile to `file`")
-					fs.StringVar(&ctx.ParsedFlags.PhpExtensionsArg, "php-extensions", "php,inc,php5,phtml", "List of PHP extensions to be recognized")
+					fs.StringVar(&ctx.ParsedFlags.StubsDir, "stubs-dir", "", "Directory with custom phpstorm-stubs")
+					fs.StringVar(&ctx.ParsedFlags.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
+					fs.StringVar(&ctx.ParsedFlags.IndexOnlyFiles, "index-only-files", "", "Comma-separated list of paths to files, which should be indexed, but not analyzed")
+					fs.StringVar(&ctx.ParsedFlags.PhpExtensionsArg, "php-exts", "php,inc,php5,phtml", "List of PHP file extensions to be analyzed")
 
 					// Some values need to be set manually.
 					ctx.ParsedFlags.AllowAll = true
 					ctx.ParsedFlags.ReportsCritical = cmd.AllNonNoticeChecks
 
 					fs.StringVar(&flags.PaletteSrc, "palette", "palette.yaml", "File with color palette")
-					fs.StringVar(&flags.ColorTag, "tag", "color", "The tag to be used to set the color in phpdoc")
+					fs.StringVar(&flags.ColorTag, "tag", "color", "The tag to be used to set the color in PHPDoc")
 					fs.StringVar(&flags.Output, "output", "", "Path to the file where the errors will be written in JSON format")
 
 					ctx.CustomFlags = flags
