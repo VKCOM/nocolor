@@ -37,7 +37,7 @@ function getDataFromMemcached() {
 }
 ```
 
-First of all, we need to determine the colors that we need.
+First, we need to determine the colors that we need.
 
 We can use the `highload` color to indicate functions that are both **highly loaded** and functions that **can work under high load**.
 
@@ -108,7 +108,7 @@ function getDataFromDatabase() {
 
 ### Internals
 
-Suppose we have some folder with some module. This module contains some API and you would not want anyone to use something outside of this API.
+Suppose we have some folder with some module. This module contains some API and you would not want anyone to use something outside this API.
 
 We want to prevent some functions from being called from this module because they are **internal**.
 

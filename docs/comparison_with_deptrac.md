@@ -172,16 +172,16 @@ Service::method@service -> Repository::do@repository
 ## Conclusions
 
 1. **Deptrac** works with classes and **NoColor** works with functions;
-2. In **Deptrac**, all configuration takes place in the config using various selectors, and in **NoColor**, using annotations over functions and a palette in the form of a config file;
+2. In **Deptrac**, all configuration takes place in the config using various selectors, and in **NoColor**, using annotations over functions, and a palette in the form of a config file;
 3. **Deptrac** only supports one level of nesting, and **NoColor** can check in depth for 50 color functions;
 4. In **Deptrac**, due to the lack of type inference, not all dependencies can be found, and in **NoColor** there is type inference, so all possible calls will be found;
 5. **NoColor** is better suited for analyzing legacy projects where many functions and few classes are used;
 6. **Deptrac** works faster on personal computers, but in one thread, and **NoColor** is easily parallelized and can work at all the capacities provided;
 7. **Deptrac** provides various nice and visual views like Graphviz, **NoColor** doesn't;
-8. **Deptrac** provides many different collectors, which can greatly simplify the work with the tool when **NoColor** has only one way to set the color — in PHPDoc.
+8. **Deptrac** provides many collectors, which can greatly simplify the work with the tool when **NoColor** has only one way to set the color — in PHPDoc.
 
 As a result, **NoColor** is not a replacement for **Deptrac**, but its addition aimed at deeper validation of function calls.
 
 ## Next steps
 
-- [How it works](https://github.com/vkcom/nocolor/blob/master/docs/how_it_work.md)
+- [Description of the color concept](https://github.com/vkcom/nocolor/blob/master/docs/concept_of_colors.md)

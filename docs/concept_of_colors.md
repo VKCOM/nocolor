@@ -255,7 +255,7 @@ Exclusion rules are also written after the rule resulting in the error.
 
 ### Special color `@remover`
 
-In large projects like ours, some functions call many other functions, and therefore, because of them, the analysis process can be very long, since a large number of functions are reachable from them. To exclude such functions from the call graph, thereby manually decoupling the large connectivity component, there is a special color `@remover` that removes the function from the call graph.
+In large projects like ours, some functions call many other functions, and therefore, because of them, the analysis process can be very long, since many functions are reachable from them. To exclude such functions from the call graph, thereby manually decoupling the large connectivity component, there is a special color `@remover` that removes the function from the call graph.
 
 For example:
 

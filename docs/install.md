@@ -14,7 +14,7 @@ After installation, just run the following command:
 $ go get -v github.com/vkcom/nocolor
 ```
 
-And **NoColor** will be install to `$GOPATH/bin/nocolor`, which usually expands to `$HOME/go/bin/nocolor`.
+And **NoColor** will be installed to `$GOPATH/bin/nocolor`, which usually expands to `$HOME/go/bin/nocolor`.
 
 For convenience, you can add this path to the **PATH**.
 
