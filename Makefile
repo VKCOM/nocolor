@@ -11,13 +11,18 @@ build: clear
 build-release:
 	go run ./_scripts/release.go -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
 
-check:
+check: lint test
+
+test:
+	@echo "running tests..."
+	@go test -tags tracing -count 3 -race -v ./tests/...
+	@echo "tests passed"
+
+lint:
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH_DIR)/bin v1.39.0
 	@echo "running linters..."
 	@$(GOPATH_DIR)/bin/golangci-lint run ./...
-	@echo "running tests..."
-	@go test -tags tracing -count 3 -race -v ./tests/...
-	@echo "everything is OK"
+	@echo "no linter errors found"
 
 clear:
 	if [ -d build ]; then rm -r build; fi
