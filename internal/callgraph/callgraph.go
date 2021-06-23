@@ -4,10 +4,11 @@ import (
 	"github.com/vkcom/nocolor/internal/symbols"
 )
 
-type RawGraph map[*Node]Nodes
-
+// Nodes is an alias for a slice of graph nodes for which a Remove
+// function is defined for ease of interaction.
 type Nodes []*Node
 
+// Remove is a function that removes the passed node from the slice if any.
 func (n Nodes) Remove(node *Node) Nodes {
 	index := -1
 	for i, fun := range n {
@@ -29,6 +30,12 @@ func removeHelper(s Nodes, i int) Nodes {
 	return s[:len(s)-1]
 }
 
+// RawGraph is a map that stores all the functions that are called
+// in the function or the function in which the function is called.
+type RawGraph map[*Node]Nodes
+
+// Graph is a structure for storing the complete call graph, as
+// well as the functions that are included in it.
 type Graph struct {
 	Functions Nodes
 
@@ -36,6 +43,9 @@ type Graph struct {
 	RevGraph RawGraph
 }
 
+// Remove is a function that removes the passed node from the Graph.
+//
+// Note: Node is not removed from the RevGraph.
 func (g *Graph) Remove(node *Node) {
 	callers := g.RevGraph[node]
 	for _, caller := range callers {
@@ -43,6 +53,9 @@ func (g *Graph) Remove(node *Node) {
 	}
 }
 
+// Node is a structure for storing information about the functions that call the
+// function, the functions in which the function is called, and the reachable
+// colored functions from the function.
 type Node struct {
 	Function *symbols.Function
 

@@ -7,11 +7,11 @@ import (
 
 type visitedMap map[*callgraph.Node]int
 
-// Here we calculate node.NextWithColors for every function.
+// CalcNextWithColor function to calculate node.NextWithColors for every function.
 // We'll use it for perform dfs only for colored nodes of a call graph.
 //
-// Note: this precalculation is needed, because dfs for a whole call
-// graph is too heavy on a large code base.
+// Note: this precalculation is needed, because dfs for a whole call graph is too
+// heavy on a large code base.
 func CalcNextWithColor(graph *callgraph.Graph) {
 	nodes := graph.Functions
 	nodesCount := len(nodes)
@@ -76,11 +76,11 @@ func eachComponent(component, edges callgraph.Nodes) {
 		}
 	}
 	if hasColorsInComponent && len(component) > 1 {
-		var added palette.ColorMask
+		added := palette.NewEmptyColorMasks()
 		for _, node := range component {
 			for _, color := range node.Function.Colors.Colors {
-				if added&color == 0 {
-					added |= color
+				if !added.Contains(color) {
+					added = added.Add(color)
 					nextColoredUniq[node] = struct{}{}
 				}
 			}

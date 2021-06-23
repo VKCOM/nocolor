@@ -4,48 +4,57 @@ import (
 	"strconv"
 )
 
-type Color = uint64
-type ColorMask = uint64
-
-// All functions without any colors are transparent: C + transparent = C.
-const SpecialColorTransparent Color = 0
-
-// @color remover works so: C + remover = transparent.
-const SpecialColorRemover Color = 1 << 63
-
-// Ruleset is a group of rules, order is important.
+// Ruleset is a group of rules, where order is important.
 // Typically, it looks like one error rule and some
 // "exceptions" — more specific color chains with no error
 type Ruleset []*Rule
 
+// NewRuleset creates a new Ruleset.
 func NewRuleset(rules ...*Rule) Ruleset {
 	return append(Ruleset(nil), rules...)
 }
 
-// Rule are representation of human-written "api has-curl" => "error text"
-// or "api allow-curl has-curl" => 1
-// All colors are pre-converted to numeric while reading strings.
+// Rule are representation of human-written rule:
+//   "api has-curl" => "error text"
+// or
+//   "api allow-curl has-curl" => 1
 type Rule struct {
 	Colors []Color
-	Mask   ColorMask
+	Masks  ColorMasks
 	Error  string
 }
 
+// NewRule creates a new Rule.
 func NewRule(colors []Color, error string) *Rule {
-	var mask ColorMask
-	for _, color := range colors {
-		mask |= color
+	return &Rule{
+		Colors: colors,
+		Masks:  NewColorMasks(colors),
+		Error:  error,
 	}
-
-	return &Rule{Colors: colors, Mask: mask, Error: error}
 }
 
+// IsError checks if the rule describes an error.
 func (r *Rule) IsError() bool {
 	return r.Error != ""
 }
 
-func (r *Rule) ContainsIn(colorMask ColorMask) bool {
-	return (r.Mask & colorMask) == r.Mask
+// ContainsIn checks if the rule's colors are contained in the passed mask.
+func (r *Rule) ContainsIn(colorMasks ColorMasks) bool {
+	// If the number of masks in the received list of masks is
+	// less than in the current rule, then this rule cannot
+	// automatically be a part of the received list of masks.
+	if len(colorMasks) < len(r.Masks) {
+		return false
+	}
+
+	for i := range r.Masks {
+		matched := (r.Masks[i].Val & colorMasks[i].Val) == r.Masks[i].Val
+		if !matched {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (r *Rule) String(palette *Palette) string {
@@ -62,19 +71,18 @@ func (r *Rule) String(palette *Palette) string {
 }
 
 // Palette is a group of rulesets.
-// All colors are stored as numbers, not as strings:
-//   They are numbers 1 << n, as we want to use bitmasks
-//   to quickly test whether to check a rule for callstack.
+// All colors are stored as Color struct, not as strings.
 type Palette struct {
 	Rulesets          []Ruleset
 	ColorNamesMapping map[string]Color
 }
 
+// NewPalette creates a new Palette.
 func NewPalette() *Palette {
 	return &Palette{
 		ColorNamesMapping: map[string]Color{
-			"transparent": SpecialColorTransparent,
-			"remover":     SpecialColorRemover,
+			"transparent": NewColor(SpecialColorTransparent, 0),
+			"remover":     NewColor(SpecialColorRemover, 0),
 		},
 	}
 }
@@ -94,9 +102,18 @@ func (p *Palette) RegisterColorName(colorName string) Color {
 		return color
 	}
 
-	bitShift := len(p.ColorNamesMapping) - 1 // User-defined colors are 1<<1, 1<<2, and so on.
-	color = Color(1) << bitShift
+	index := 0
 
+	// User-defined colors are 1 << 2, 1 << 3, and so on.
+	bitShift := len(p.ColorNamesMapping) - CountSpecialColors
+
+	// If there are no more empty bits in the current mask.
+	if bitShift >= MaxColorsInMask {
+		index = bitShift / MaxColorsInMask
+		bitShift %= MaxColorsInMask
+	}
+
+	color = NewColor(uint64(1)<<bitShift, index)
 	p.ColorNamesMapping[colorName] = color
 
 	return color
@@ -113,7 +130,7 @@ func (p *Palette) GetNameByColor(needColor Color) string {
 		}
 	}
 
-	return strconv.FormatUint(needColor, 10)
+	return strconv.FormatUint(needColor.Val, 10)
 }
 
 // ColorContainer is class containing colors after @color
@@ -139,14 +156,16 @@ func (c *ColorContainer) Empty() bool {
 	return len(c.Colors) == 0
 }
 
-func (c *ColorContainer) String(palette *Palette, withHighlights ColorMask) string {
+func (c *ColorContainer) String(palette *Palette, withHighlights ColorMasks) string {
 	var desc string
 
 	for _, color := range c.Colors {
-		if withHighlights == 0 || withHighlights&color != 0 {
-			desc += "@"
-			desc += palette.GetNameByColor(color)
+		if !withHighlights.Contains(color) {
+			continue
 		}
+
+		desc += "@"
+		desc += palette.GetNameByColor(color)
 	}
 
 	return desc

@@ -49,6 +49,13 @@ function someHighload() {
 /**
  * @color no-highload
  */
+function someA() {
+    echo 1;
+}
+
+/**
+ * @color no-highload
+ */
 function someNoHighload() {
     echo 1;
 }

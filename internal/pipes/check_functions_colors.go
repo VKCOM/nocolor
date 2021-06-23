@@ -21,11 +21,11 @@ func CheckColorsInGraph(graph *callgraph.Graph, palette *palette.Palette) []*Rep
 	roots := FindRootNodes(graph)
 
 	var reports []*Report
-	checker := NewCheckerFunctionsColors(graph, palette)
+	checker := newCheckerFunctionsColors(graph, palette)
 	for _, root := range roots {
 		callstack := callgraph.NewCallstackOfColoredFunctions()
 		reports = append(reports,
-			checker.CheckFuncDFS(callstack, graph, root)...,
+			checker.checkFuncDFS(callstack, graph, root)...,
 		)
 	}
 
@@ -63,7 +63,7 @@ func FindRootNodes(graph *callgraph.Graph) callgraph.Nodes {
 
 const maxShownErrorsCount = 10
 
-type CheckerFunctionsColors struct {
+type checkerFunctionsColors struct {
 	callGraph *callgraph.Graph
 	palette   *palette.Palette
 
@@ -71,15 +71,15 @@ type CheckerFunctionsColors struct {
 	shownErrors map[string]struct{}
 }
 
-func NewCheckerFunctionsColors(callGraph *callgraph.Graph, palette *palette.Palette) *CheckerFunctionsColors {
-	return &CheckerFunctionsColors{
+func newCheckerFunctionsColors(callGraph *callgraph.Graph, palette *palette.Palette) *checkerFunctionsColors {
+	return &checkerFunctionsColors{
 		callGraph:   callGraph,
 		palette:     palette,
 		shownErrors: map[string]struct{}{},
 	}
 }
 
-func (c *CheckerFunctionsColors) CheckFuncDFS(callstack *callgraph.CallstackOfColoredFunctions, graph *callgraph.Graph, node *callgraph.Node) (reports []*Report) {
+func (c *checkerFunctionsColors) checkFuncDFS(callstack *callgraph.CallstackOfColoredFunctions, graph *callgraph.Graph, node *callgraph.Node) (reports []*Report) {
 	callstack.Append(node)
 
 	wasAnyError := false
@@ -106,7 +106,7 @@ func (c *CheckerFunctionsColors) CheckFuncDFS(callstack *callgraph.CallstackOfCo
 	if !wasAnyError && node.NextWithColors != nil {
 		for _, next := range *node.NextWithColors {
 			if callstack.Size() < 50 && !callstack.Contains(next) {
-				reps := c.CheckFuncDFS(callstack, graph, next)
+				reps := c.checkFuncDFS(callstack, graph, next)
 				reports = append(reports, reps...)
 			}
 		}
@@ -117,8 +117,8 @@ func (c *CheckerFunctionsColors) CheckFuncDFS(callstack *callgraph.CallstackOfCo
 }
 
 func matchRule(callstack *callgraph.CallstackOfColoredFunctions, rule *palette.Rule) bool {
-	matchMask := callstack.ColorsMask
-	if matchMask == 0 || !rule.ContainsIn(matchMask) {
+	matchMasks := callstack.ColorsMasks
+	if len(matchMasks) == 0 || !rule.ContainsIn(matchMasks) {
 		return false
 	}
 
@@ -153,7 +153,7 @@ func matchTwoVectors(ruleChain, actualChain []palette.Color) bool {
 // On error (colored chain breaks some rule), we want to find an actual chain of calling.
 // findCallstackBetweenTwoFunctionsBFS is launched only on error, that's why we don't care
 // about performance and just use bfs.
-func (c *CheckerFunctionsColors) findCallstackBetweenTwoFunctionsBFS(from, target *callgraph.Node, shouldntAppear map[*callgraph.Node]struct{}) callgraph.Nodes {
+func (c *checkerFunctionsColors) findCallstackBetweenTwoFunctionsBFS(from, target *callgraph.Node, shouldntAppear map[*callgraph.Node]struct{}) callgraph.Nodes {
 	visitedLevel := map[*callgraph.Node]int{}
 	var bfsQueue callgraph.Nodes
 
@@ -210,7 +210,7 @@ func (c *CheckerFunctionsColors) findCallstackBetweenTwoFunctionsBFS(from, targe
 	return revCallstack
 }
 
-func (c *CheckerFunctionsColors) errorOnRuleBroken(callstack *callgraph.CallstackOfColoredFunctions, rule *palette.Rule) *Report {
+func (c *checkerFunctionsColors) errorOnRuleBroken(callstack *callgraph.CallstackOfColoredFunctions, rule *palette.Rule) *Report {
 	if len(c.shownErrors) > maxShownErrorsCount {
 		return nil
 	}
@@ -255,7 +255,7 @@ func (c *CheckerFunctionsColors) errorOnRuleBroken(callstack *callgraph.Callstac
 
 	callstackStr := ""
 	for i, node := range callChainToShow {
-		callstackStr += cfmt.Sprintf("%s{{%s}}::cyan", node.Function.HumanReadableName(), node.Function.Colors.String(c.palette, rule.Mask))
+		callstackStr += cfmt.Sprintf("%s{{%s}}::cyan", node.Function.HumanReadableName(), node.Function.Colors.String(c.palette, rule.Masks))
 		if i != len(callChainToShow)-1 {
 			callstackStr += " -> "
 		}
