@@ -5,8 +5,8 @@ GOPATH_DIR=`go env GOPATH`
 BIN_NAME="nocolor"
 PKG=github.com/vkcom/nocolor/cmd
 
-build:
-	go build -ldflags "-X '$(PKG).BuildTime=$(NOW)' -X '$(PKG).BuildOSUname=$(OS)' -X '$(PKG).BuildCommit=$(AFTER_COMMIT)'" -o $(BIN_NAME)
+build: clear
+	go build -ldflags "-X '$(PKG).BuildTime=$(NOW)' -X '$(PKG).BuildOSUname=$(OS)' -X '$(PKG).BuildCommit=$(AFTER_COMMIT)'" -o build/$(BIN_NAME)
 
 build-release:
 	go run ./_scripts/release.go -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
@@ -18,5 +18,8 @@ check:
 	@echo "running tests..."
 	@go test -tags tracing -count 3 -race -v ./tests/...
 	@echo "everything is OK"
+
+clear:
+	if [ -d build ]; then rm -r build; fi
 
 .PHONY: check
