@@ -1,14 +1,13 @@
 package palette
 
 import (
-	"encoding/json"
 	"io/ioutil"
-	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 )
 
+// Config is a structure for storing a palette of colors as a config.
 type Config struct {
 	Palette [][]map[string]string `json:"palette"`
 }
@@ -20,28 +19,15 @@ func OpenPaletteFromFile(path string) (*Palette, error) {
 		return nil, err
 	}
 
-	if filepath.Ext(path) == ".json" {
-		return ReadPaletteFileJSON(data)
-	}
-
 	return ReadPaletteFileYAML(data)
 }
 
+// The ReadPaletteFileYAML function interprets the passed text as a
+// config in YAML format and returns a ready-made palette.
 func ReadPaletteFileYAML(data []byte) (*Palette, error) {
 	config := &Config{}
 
 	err := yaml.Unmarshal(data, &config.Palette)
-	if err != nil {
-		return nil, err
-	}
-
-	return parsePaletteRaw(config), nil
-}
-
-func ReadPaletteFileJSON(data []byte) (*Palette, error) {
-	var config *Config
-
-	err := json.Unmarshal(data, &config)
 	if err != nil {
 		return nil, err
 	}
