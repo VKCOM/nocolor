@@ -9,9 +9,9 @@ import (
 )
 
 const defaultPalette = `
--
+red group:
   - "red green": "red green mixing"
--
+internals group:
   - "internals": "call internals"
   - "module internals": ""
 `

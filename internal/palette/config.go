@@ -11,9 +11,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type ConfigRule map[string]string
+
 // Config is a structure for storing a palette of colors as a config.
 type Config struct {
-	Palette [][]map[string]string `json:"palette"`
+	Palette map[string][]ConfigRule
 }
 
 // OpenPaletteFromFile returns a ready-use palette from a file.

@@ -16,10 +16,10 @@ func TestNotAllowedMore(t *testing.T) {
 	palette.MaxColorsInMask = 2
 
 	suite.Palette = `
--
+ssr group:
   - "ssr": ""
   - "api": ""
--
+rgb group:
   - "red green blue": "dont allow rgb nesting"
 `
 	suite.AddFile(`<?php

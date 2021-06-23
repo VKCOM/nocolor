@@ -16,7 +16,7 @@ func TestRecursiveMaxColorOk(t *testing.T) {
 	palette.MaxColorsInMask = 2
 
 	suite.Palette = `
--
+api group:
   - "api has-curl": "dont call curl from api"
   - "api has-curl please": ""
 `

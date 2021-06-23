@@ -10,7 +10,7 @@ func TestResumableFail(t *testing.T) {
 	suite := linttest.NewSuite(t)
 
 	suite.Palette = `
--
+api group:
   - "api has-curl": "curl from api"
 `
 	suite.AddFile(`<?php

@@ -10,10 +10,10 @@ func TestClasses(t *testing.T) {
 	suite := linttest.NewSuite(t)
 
 	suite.Palette = `
--
+controller group:
   - "controller": ""
 
--
+service repository group:
   - "service repository": "error"
 `
 	suite.AddFile(`<?php
@@ -60,10 +60,10 @@ func TestClassAndTrait(t *testing.T) {
 	suite := linttest.NewSuite(t)
 
 	suite.Palette = `
--
+controller group:
   - "controller": ""
 
--
+service repository group:
   - "service repository": "error"
 `
 	suite.AddFile(`<?php
@@ -108,10 +108,10 @@ func TestClassAndInterface(t *testing.T) {
 	suite := linttest.NewSuite(t)
 
 	suite.Palette = `
--
+controller group:
   - "controller": ""
 
--
+service repository group:
   - "service repository": "error"
 `
 	suite.AddFile(`<?php

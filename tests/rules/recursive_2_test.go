@@ -10,7 +10,7 @@ func TestRecursiveOk(t *testing.T) {
 	suite := linttest.NewSuite(t)
 
 	suite.Palette = `
--
+api group:
   - "api has-curl": "dont call curl from api"
   - "api has-curl please": ""
 `
