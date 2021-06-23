@@ -21,11 +21,11 @@ var (
 	BuildCommit  string
 )
 
-func printVersion() {
+func printVersion(mainConfig *cmd.MainConfig) {
 	if BuildCommit == "" {
-		log.Printf("built without version info (try using 'make build')")
+		log.Printf("Version %s: built without version info", mainConfig.LinterVersion)
 	} else {
-		log.Printf("built on: %s OS: %s Commit: %s\n", BuildTime, BuildOSUname, BuildCommit)
+		log.Printf("Version %s: built on: %s OS: %s Commit: %s\n", mainConfig.LinterVersion, BuildTime, BuildOSUname, BuildCommit)
 	}
 }
 
@@ -67,7 +67,7 @@ func Main() {
 				Name:        "version",
 				Description: "The command outputs the version",
 				Action: func(ctx *cmd.AppContext) (int, error) {
-					printVersion()
+					printVersion(ctx.MainConfig)
 					return 0, nil
 				},
 			})

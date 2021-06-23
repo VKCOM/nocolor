@@ -20,6 +20,7 @@ const (
 	ExternFunc
 )
 
+// Function is a structure for storing information about a function.
 type Function struct {
 	Name   string
 	Type   FunctionType
@@ -30,6 +31,7 @@ type Function struct {
 	CalledBy *Functions
 }
 
+// HumanReadableName returns a string with a name that is understandable.
 func (f *Function) HumanReadableName() string {
 	if f.Type == MainFunc {
 		name := f.Name

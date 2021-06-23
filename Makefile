@@ -2,7 +2,7 @@ NOW=`date +%Y%m%d%H%M%S`
 OS=`uname -n -m`
 AFTER_COMMIT=`git rev-parse HEAD`
 GOPATH_DIR=`go env GOPATH`
-BIN_NAME="nocolor"
+BIN_NAME=nocolor
 PKG=github.com/vkcom/nocolor/cmd
 
 build: clear
