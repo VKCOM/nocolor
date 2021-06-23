@@ -2,7 +2,7 @@
 
 Let's look at how colors are checked and what **problems** can arise if we talk about **large projects**.
 
-First of all, remember that our concept consists of **colors** and **mixing rules**, where the rules are grouped, in each group the **rule leading to an error is the first rule**, followed by **optional exception rules**.
+First of all, remember that our concept consists of **colors** and **mixing rules**, where the rules are grouped, in each group the **rule leading to an error is the first rule**, followed by **optional exclusion rules**.
 
 ```yaml
 -
@@ -81,7 +81,7 @@ Let's see what happens when checking if the function `f2` calls `f1`:
 
    And so each rule is checked and **if the rule matches**, and **if this rule describes an error**, then we **throw an error**.
 
-   Very important here is the fact that each **group contains only one rule that leads to an error**, and **all the others should be exception rules**. Therefore, when checking the rules, the rules are **compared from the end**, that is, the **exclusion rules are checked first**, and at the **very end, the rule is an error**. If the **current color chain** matches **some exception rule**, then the rules of this group are **not checked further**.
+   Very important here is the fact that each **group contains only one rule that leads to an error**, and **all the others should be exclusion rules**. Therefore, when checking the rules, the rules are **compared from the end**, that is, the **exclusion rules are checked first**, and at the **very end, the rule is an error**. If the **current color chain** matches **some exception rule**, then the rules of this group are **not checked further**.
 
    Let's consider a case when we have two functions in the call stack:
    

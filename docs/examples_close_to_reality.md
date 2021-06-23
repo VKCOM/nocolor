@@ -65,7 +65,7 @@ In this case, if someone tries to call the `no-highload` or `db-access` function
 
 Of these two rules, the first one sounds quite unambiguous, cannot call functions in this way, and most likely there should be no exceptions. But the second option is too harsh. A situation is possible when it is necessary when the developer understands what he is doing and what it can lead to.
 
-Exception rules have already been mentioned in the description of the concept, so let's write another rule that will allow using the database functions in `highload` functions.
+Exclusion rules have already been mentioned in the description of the concept, so let's write another rule that will allow using the database functions in `highload` functions.
 
 ```yaml
 -
@@ -124,7 +124,7 @@ Let's describe the rules that **prohibit doing this outside of the module**.
 
 The first rule will **disallow any function calls** that are marked as internal.
 
-The second rule will **add an exception that allows** such functions to be called from functions with the `some-module` color.
+The second rule will **add an exclusion that allows** such functions to be called from functions with the `some-module` color.
 
 Now it is enough to add the color `some-internals` to the functions that you do not want to be called outside the module, but for the places in the module where they are called add the color `some-module`. Thus, all calls outside the module will give errors.
 
@@ -145,4 +145,4 @@ If you need **several allowed places**, then it is enough to **add a new exclusi
 
 ## Next steps
 
-- [Comparison with Deptrac](https://github.com/vkcom/nocolor/blob/master/docs/nocolor_vs_deptrac.md)
+- [Comparison with Deptrac](https://github.com/vkcom/nocolor/blob/master/docs/comparison_with_deptrac.md)
