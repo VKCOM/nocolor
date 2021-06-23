@@ -1,7 +1,11 @@
 package palette
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -16,20 +20,36 @@ type Config struct {
 func OpenPaletteFromFile(path string) (*Palette, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		var perr *fs.PathError
+		if errors.As(err, &perr) {
+			absPath, err := filepath.Abs(path)
+			if err != nil {
+				absPath = path
+			}
+
+			return nil, fmt.Errorf(`cannot open palette file '%s', file not found. Full path: %s`, path, absPath)
+		}
+
+		return nil, fmt.Errorf(`cannot open palette file '%s': %v`, path, err)
 	}
 
-	return ReadPaletteFileYAML(data)
+	return ReadPaletteFileYAML(path, data)
 }
 
 // The ReadPaletteFileYAML function interprets the passed text as a
 // config in YAML format and returns a ready-made palette.
-func ReadPaletteFileYAML(data []byte) (*Palette, error) {
+func ReadPaletteFileYAML(path string, data []byte) (*Palette, error) {
 	config := &Config{}
 
 	err := yaml.Unmarshal(data, &config.Palette)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(`could not parse palette file '%s'. 
+The correct format is:
+ruleset description:
+- rule
+- rule
+(optionally with many rulesets)
+In .yaml syntax, it's a map from string key (description) to list (rules)`, path)
 	}
 
 	return parsePaletteRaw(config), nil

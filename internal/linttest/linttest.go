@@ -70,7 +70,7 @@ func (s *Suite) RunLinter() []*pipes.ColorReport {
 	walkers.Register(s.config, globalContext, pal, "color")
 
 	var err error
-	paletteFromFile, err := palette.ReadPaletteFileYAML([]byte(s.Palette))
+	paletteFromFile, err := palette.ReadPaletteFileYAML("palette.yaml", []byte(s.Palette))
 	if err != nil {
 		s.t.Fatalf("could not read palette: %v", err)
 	}

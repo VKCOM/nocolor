@@ -27,7 +27,7 @@ func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext) (status in
 
 	pal, err := palette.OpenPaletteFromFile(flags.PaletteSrc)
 	if err != nil {
-		return 1, fmt.Errorf("error open palette file '%s': %v", flags.PaletteSrc, err)
+		return 1, err
 	}
 
 	// Registering custom walkers for collecting the call graph.
