@@ -5,6 +5,8 @@ import (
 	"github.com/vkcom/nocolor/internal/symbols"
 )
 
+// FunctionsToNodes is a function that converts passed functions into
+// a set of nodes that represent those functions.
 func FunctionsToNodes(funcs *symbols.Functions) callgraph.Nodes {
 	nodes := make(callgraph.Nodes, 0, funcs.Len())
 	visited := make(map[*symbols.Function]*callgraph.Node, funcs.Len())

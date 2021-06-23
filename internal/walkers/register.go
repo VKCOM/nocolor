@@ -6,6 +6,7 @@ import (
 	"github.com/vkcom/nocolor/internal/palette"
 )
 
+// Register registers custom walkers to collect information about functions.
 func Register(config *linter.Config, globalCtx *GlobalContext, pal *palette.Palette, colorTag string) {
 	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
 		if ctx.ClassParseState().Info.IsIndexingComplete() {

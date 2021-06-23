@@ -13,17 +13,18 @@ import (
 	"github.com/vkcom/nocolor/internal/walkers"
 )
 
-type ExtraCheckFlags struct {
+type extraCheckFlags struct {
 	PaletteSrc string
 	ColorTag   string
 }
 
+// Check is the function that starts the analysis of the project.
 func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext) (status int, err error) {
-	flags := ctx.CustomFlags.(*ExtraCheckFlags)
+	flags := ctx.CustomFlags.(*extraCheckFlags)
 
 	pal, err := palette.OpenPaletteFromFile(flags.PaletteSrc)
 	if err != nil {
-		return 1, err
+		return 1, fmt.Errorf("error open palette file '%s': %v", flags.PaletteSrc, err)
 	}
 
 	// Registering custom walkers for collecting the call graph.
@@ -65,6 +66,7 @@ func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext) (status in
 	return 0, nil
 }
 
+// HandleFunctions is a function that starts checking colors.
 func HandleFunctions(ctx *cmd.AppContext, funcs *symbols.Functions, palette *palette.Palette) []*pipes.Report {
 	workers := ctx.ParsedFlags.MaxConcurrency
 	reportsCh := make(chan []*pipes.Report, 10)

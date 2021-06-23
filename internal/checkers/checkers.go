@@ -4,6 +4,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 )
 
+// Contains checks for the presence of a checker in the list.
 func Contains(name string) bool {
 	for _, info := range List() {
 		if info.Name == name {
@@ -13,6 +14,7 @@ func Contains(name string) bool {
 	return false
 }
 
+// List returns a list of checkers.
 func List() []linter.CheckerInfo {
 	return []linter.CheckerInfo{
 		{

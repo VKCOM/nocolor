@@ -7,6 +7,8 @@ import (
 	"github.com/vkcom/nocolor/internal/callgraph"
 )
 
+// Async starts the passed number of workers to process the graphs passed to
+// the channel, each of which is processed in the passed callback function.
 func Async(workers int, input chan *callgraph.Graph, output chan []*Report, cb func(*callgraph.Graph) []*Report) {
 	go func() {
 		var wg sync.WaitGroup
@@ -30,6 +32,7 @@ func Async(workers int, input chan *callgraph.Graph, output chan []*Report, cb f
 	}()
 }
 
+// WriteGraphsAsync asynchronously writes the given graphs to the transferred channel.
 func WriteGraphsAsync(graphs []*callgraph.Graph, graphsCh chan *callgraph.Graph) {
 	go func() {
 		for _, graph := range graphs {
@@ -39,6 +42,8 @@ func WriteGraphsAsync(graphs []*callgraph.Graph, graphsCh chan *callgraph.Graph)
 	}()
 }
 
+// ReadReportsSync synchronously reads all reports from the channel,
+// blocking the stream until the channel is closed.
 func ReadReportsSync(output chan []*Report) []*Report {
 	var allReports []*Report
 	for reports := range output {

@@ -5,16 +5,20 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 )
 
+// BlockIndexer is a dummy walker.
 type BlockIndexer struct {
 	linter.BlockCheckerDefaults
 }
 
+// BlockChecker is a walker that handles function calls, method calls,
+// class creation, and file imports in block context (inside functions).
 type BlockChecker struct {
 	linter.BlockCheckerDefaults
 	ctx  *linter.BlockContext
 	root *RootChecker
 }
 
+// NewBlockChecker creates a new BlockChecker walker.
 func NewBlockChecker(ctx *linter.BlockContext, root *RootChecker) *BlockChecker {
 	return &BlockChecker{
 		ctx:  ctx,
@@ -22,13 +26,16 @@ func NewBlockChecker(ctx *linter.BlockContext, root *RootChecker) *BlockChecker 
 	}
 }
 
+// EnterNode is method to use BlockChecker in the Walk method of AST nodes.
 func (b *BlockChecker) EnterNode(n ir.Node) bool {
 	b.BeforeEnterNode(n)
 	return true
 }
 
+// LeaveNode is method to use BlockChecker in the Walk method of AST nodes.
 func (b *BlockChecker) LeaveNode(n ir.Node) {}
 
+// BeforeEnterNode is the main method for processing AST nodes.
 func (b *BlockChecker) BeforeEnterNode(n ir.Node) {
 	switch n := n.(type) {
 	case *ir.NewExpr:

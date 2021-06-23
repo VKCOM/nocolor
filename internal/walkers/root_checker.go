@@ -17,6 +17,8 @@ import (
 	"github.com/vkcom/nocolor/internal/symbols"
 )
 
+// RootChecker is a walker that collects information about the
+// colors of functions and checks them for correctness.
 type RootChecker struct {
 	linter.RootCheckerDefaults
 
@@ -30,6 +32,7 @@ type RootChecker struct {
 	colorTag string
 }
 
+// NewRootChecker returns a new walker.
 func NewRootChecker(palette *palette.Palette, globalCtx *GlobalContext, ctx *linter.RootContext, colorTag string) *RootChecker {
 	return &RootChecker{
 		ctx:       ctx,
@@ -39,13 +42,16 @@ func NewRootChecker(palette *palette.Palette, globalCtx *GlobalContext, ctx *lin
 	}
 }
 
+// EnterNode is method to use RootChecker in the Walk method of AST nodes.
 func (r *RootChecker) EnterNode(n ir.Node) bool {
 	r.BeforeEnterNode(n)
 	return true
 }
 
+// LeaveNode is method to use RootChecker in the Walk method of AST nodes.
 func (r *RootChecker) LeaveNode(ir.Node) {}
 
+// BeforeEnterFile sets the current function of the file.
 func (r *RootChecker) BeforeEnterFile() {
 	fun, ok := r.globalCtx.Functions.Get(generateFileFuncName(r.ctx.Filename()))
 	if !ok {
@@ -61,6 +67,7 @@ func (r *RootChecker) BeforeEnterFile() {
 	r.fileFunction = fun
 }
 
+// BeforeEnterNode
 func (r *RootChecker) BeforeEnterNode(n ir.Node) {
 	switch n := n.(type) {
 	case *ir.ClassStmt:
@@ -83,6 +90,7 @@ func (r *RootChecker) setCurrentClassColors(name ir.Node, doc phpdoc.Comment) {
 	r.currentClassColors = color
 }
 
+// AfterEnterNode
 func (r *RootChecker) AfterEnterNode(n ir.Node) {
 	switch n := n.(type) {
 	case *ir.NewExpr:

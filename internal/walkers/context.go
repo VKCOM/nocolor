@@ -11,12 +11,14 @@ import (
 	"github.com/vkcom/nocolor/internal/symbols"
 )
 
+// GlobalContext is a structure for storing cache.
 type GlobalContext struct {
 	Info *meta.Info
 
 	Functions *symbols.Functions
 }
 
+// NewGlobalContext creates a new context.
 func NewGlobalContext(info *meta.Info) *GlobalContext {
 	return &GlobalContext{
 		Info:      info,

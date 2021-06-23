@@ -33,16 +33,16 @@ func disableAllDefaultReports(r *linter.Report) bool {
 	return checkers.Contains(r.CheckName)
 }
 
+// DefaultCacheDir function returns the default, depending on the system, directory for storing the cache.
 func DefaultCacheDir() string {
 	defaultCacheDir, err := os.UserCacheDir()
 	if err != nil {
-		defaultCacheDir = ""
-	} else {
-		defaultCacheDir = filepath.Join(defaultCacheDir, "nocolor-cache")
+		return ""
 	}
-	return defaultCacheDir
+	return filepath.Join(defaultCacheDir, "nocolor-cache")
 }
 
+// Main is the function that launches the program.
 func Main() {
 	config := linter.NewConfig()
 	context := walkers.NewGlobalContext(nil)
@@ -76,7 +76,7 @@ func Main() {
 				Name:        "check",
 				Description: "The command to start checking files",
 				RegisterFlags: func(ctx *cmd.AppContext) *flag.FlagSet {
-					flags := &ExtraCheckFlags{}
+					flags := &extraCheckFlags{}
 
 					fs := flag.NewFlagSet("check", flag.ContinueOnError)
 

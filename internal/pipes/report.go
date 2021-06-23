@@ -10,12 +10,14 @@ import (
 	"github.com/vkcom/nocolor/internal/palette"
 )
 
+// Report is a structure for storing color mixing error information.
 type Report struct {
 	Rule      *palette.Rule
 	CallChain callgraph.Nodes
 	Message   string
 }
 
+// String returns the string representation of the report.
 func (r *Report) String() string {
 	last := r.CallChain[len(r.CallChain)-1].Function
 
