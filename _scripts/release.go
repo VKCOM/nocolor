@@ -10,9 +10,10 @@ import (
 )
 
 type arguments struct {
-	commit string
-	uname  string
-	time   string
+	commit  string
+	uname   string
+	time    string
+	version string
 }
 
 type platformInfo struct {
@@ -34,6 +35,7 @@ func main() {
 	flag.StringVar(&args.commit, "build-commit", "", "build commit hash")
 	flag.StringVar(&args.uname, "build-uname", "", "build uname information")
 	flag.StringVar(&args.time, "build-time", "", "build time information string")
+	flag.StringVar(&args.version, "version", "", "version information string")
 	flag.Parse()
 
 	platforms := []platformInfo{
@@ -57,11 +59,12 @@ func prepareArchive(args arguments, platform platformInfo) error {
 		binaryExt = ".exe"
 	}
 
+	releaseDir := ".release-v" + args.version
 	pack := "github.com/vkcom/nocolor/cmd"
 
 	ldFlags := fmt.Sprintf(`-X '%[1]s.BuildTime=%s' -X '%[1]s.BuildOSUname=%s' -X 'main.BuildCommit=%[1]s'`,
 		pack, args.time, args.uname, args.commit)
-	binaryName := filepath.Join("build", "nocolor"+binaryExt)
+	binaryName := filepath.Join(releaseDir, "nocolor"+binaryExt)
 	buildCmd := exec.Command("go", "build",
 		"-o", binaryName,
 		"-ldflags", ldFlags,
@@ -75,9 +78,9 @@ func prepareArchive(args arguments, platform platformInfo) error {
 	}
 
 	// Pack it into the archive.
-	archiveName := "nocolor-" + platform.String() + ".zip"
+	archiveName := "nocolor-v" + args.version + "-" + platform.String() + ".zip"
 	zipCmd := exec.Command("zip", archiveName, "nocolor"+binaryExt)
-	zipCmd.Dir = "build"
+	zipCmd.Dir = releaseDir
 	log.Printf("creating %s archive", archiveName)
 	if out, err := zipCmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("make archive: %v: %s", err, out)

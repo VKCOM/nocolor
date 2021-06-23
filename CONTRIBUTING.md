@@ -87,8 +87,8 @@ It will install the `golangci-lint` linter and run the analysis.
 
 We do not use complicated methods for releases. Each release is created manually:
 
-- Update the version in the `cmd/main.go` file;
-- Run the `make release` command, which creates archives with executable files for Linux, Windows, and macOS;
+- Update the version in the `cmd/main.go` file and in the `Makefile`;
+- Run the `make release` command, which creates archives with executable files for Linux, Windows, and macOS in the folder `release-v[version]`;
 - Create a new release in GitHub, which describes the changes and uploads the archives;
 - Release.
 

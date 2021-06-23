@@ -4,12 +4,13 @@ AFTER_COMMIT=`git rev-parse HEAD`
 GOPATH_DIR=`go env GOPATH`
 BIN_NAME=nocolor
 PKG=github.com/vkcom/nocolor/cmd
+VERSION=0.1.0
 
 build: clear
 	go build -ldflags "-X '$(PKG).BuildTime=$(NOW)' -X '$(PKG).BuildOSUname=$(OS)' -X '$(PKG).BuildCommit=$(AFTER_COMMIT)'" -o build/$(BIN_NAME)
 
 release:
-	go run ./_scripts/release.go -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
+	go run ./_scripts/release.go -version="$(VERSION)" -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
 
 check: lint test
 
