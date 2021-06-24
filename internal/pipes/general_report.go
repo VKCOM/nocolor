@@ -39,8 +39,8 @@ func NewGeneralReportFromColorReport(r *ColorReport) *GeneralReport {
 		Message:     r.Rule.Error,
 	}
 
-	last := r.CallChain[len(r.CallChain)-1].Function
-	gr.File = last.Pos.Filename
+	first := r.CallChain[0].Function
+	gr.File = first.Pos.Filename
 
 	for _, node := range r.CallChain {
 		gr.CallChain = append(gr.CallChain, node.Function.HumanReadableName())
@@ -52,14 +52,14 @@ func NewGeneralReportFromColorReport(r *ColorReport) *GeneralReport {
 // String returns the string representation of the GeneralReport.
 func (r *GeneralReport) String() string {
 	if r.colorReport != nil {
-		last := r.colorReport.CallChain[len(r.CallChain)-1].Function
+		first := r.colorReport.CallChain[0].Function
 
-		path := last.Pos.Filename
+		path := first.Pos.Filename
 		wd, err := os.Getwd()
 		if err == nil {
 			path, err = filepath.Rel(wd, path)
 			if err != nil {
-				path = last.Pos.Filename
+				path = first.Pos.Filename
 			}
 		}
 
@@ -71,7 +71,7 @@ func (r *GeneralReport) String() string {
 
 %s
 
-`, path, last.Pos.Line, last.HumanReadableName(), r.fullMessage)
+`, path, first.Pos.Line, first.HumanReadableName(), r.fullMessage)
 	}
 
 	path := r.File
