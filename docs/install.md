@@ -45,5 +45,5 @@ A ready-to-start binary will be located in the `build` folder.
 ## Next steps
 
 - [Getting Started](https://github.com/vkcom/nocolor/blob/master/docs/usage.md)
-- [Description of the color concept](https://github.com/vkcom/nocolor/blob/master/docs/concept_of_colors.md)
+- [Description of the color concept](/docs/introducing_colors.md)
 

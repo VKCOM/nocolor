@@ -102,9 +102,9 @@ f1@highload -> f2@no-highload
 
 If so, then everything is working correctly.
 
-Read the [colors concept description](https://github.com/vkcom/nocolor/blob/master/docs/concept_of_colors.md) to understand what happened here.
+Read the [colors concept description](/docs/introducing_colors.md) to understand what happened here.
 
 ## Next steps
 
-- [Description of the color concept](https://github.com/vkcom/nocolor/blob/master/docs/concept_of_colors.md)
+- [Description of the color concept](/docs/introducing_colors.md)
 

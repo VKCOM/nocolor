@@ -4,7 +4,7 @@
 
 # nocolor
 
-**NoColor** is an *architecture checking tool* based on the [*concept of colors*](https://github.com/vkcom/nocolor/blob/master/docs/concept_of_colors.md). This concept was originally created for [KPHP](https://github.com/VKCOM/kphp), however, to be usable outside the [KPHP](https://github.com/VKCOM/kphp), this separate tool was created.
+**NoColor** is an *architecture checking tool* based on the [*concept of colors*](/docs/introducing_colors.md). This concept was originally created for [KPHP](https://github.com/VKCOM/kphp), however, to be usable outside the [KPHP](https://github.com/VKCOM/kphp), this separate tool was created.
 
 **NoColor** is built with huge codebase in mind, so it scales easily to the capacities provided. At the moment, depending on the number of cores and the speed of the hard disk, **NoColor** can deliver processing speeds from **100 to 300k lines per second**.
 
@@ -18,7 +18,7 @@ See also a [plugin](https://github.com/vkcom/nocolor-phpstorm) for **PhpStorm** 
 
 - [Install](https://github.com/vkcom/nocolor/blob/master/docs/install.md)
 - [Getting Started](https://github.com/vkcom/nocolor/blob/master/docs/usage.md)
-- [Description of the color concept](https://github.com/vkcom/nocolor/blob/master/docs/concept_of_colors.md)
+- [Description of the color concept](/docs/introducing_colors.md)
 - [Comparison with Deptrac](https://github.com/vkcom/nocolor/blob/master/docs/comparison_with_deptrac.md)
 
 ## Contributing
