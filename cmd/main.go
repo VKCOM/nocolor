@@ -16,6 +16,7 @@ import (
 
 // Build* are initialized during the build via -ldflags
 var (
+	Version      string
 	BuildTime    string
 	BuildOSUname string
 	BuildCommit  string
@@ -57,7 +58,7 @@ func Main() {
 
 	status, err := cmd.Run(&cmd.MainConfig{
 		BeforeReport:             registerReportWatcher,
-		LinterVersion:            "0.1.0",
+		LinterVersion:            Version,
 		RegisterCheckers:         checkers.List,
 		LinterConfig:             config,
 		DisableCriticalIssuesLog: true,
