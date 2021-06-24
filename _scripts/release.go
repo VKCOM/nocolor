@@ -62,8 +62,8 @@ func prepareArchive(args arguments, platform platformInfo) error {
 	releaseDir := ".release-v" + args.version
 	pack := "github.com/vkcom/nocolor/cmd"
 
-	ldFlags := fmt.Sprintf(`-X '%[1]s.BuildTime=%s' -X '%[1]s.BuildOSUname=%s' -X 'main.BuildCommit=%[1]s'`,
-		pack, args.time, args.uname, args.commit)
+	ldFlags := fmt.Sprintf(`-X '%[1]s.Version=%[2]s' -X '%[1]s.BuildTime=%[3]s' -X '%[1]s.BuildOSUname=%[4]s' -X '%[1]s.BuildCommit=%[5]s'`,
+		pack, args.version, args.time, args.uname, args.commit)
 	binaryName := filepath.Join(releaseDir, "nocolor"+binaryExt)
 	buildCmd := exec.Command("go", "build",
 		"-o", binaryName,
