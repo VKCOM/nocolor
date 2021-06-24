@@ -81,6 +81,14 @@ func Main() {
 			})
 
 			app.Commands = append(app.Commands, &cmd.Command{
+				Name:        "init",
+				Description: "The command to create a template palette in the project folder",
+				Action: func(ctx *cmd.AppContext) (int, error) {
+					return Init()
+				},
+			})
+
+			app.Commands = append(app.Commands, &cmd.Command{
 				Name:        "check",
 				Description: "The command to start checking files",
 				Arguments: []*cmd.Argument{
