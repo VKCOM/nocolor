@@ -54,10 +54,10 @@ ruleset description:
 In .yaml syntax, it's a map from string key (description) to list (rules)`, path)
 	}
 
-	return parsePaletteRaw(config), nil
+	return parsePaletteRaw(path, config)
 }
 
-func parsePaletteRaw(config *Config) *Palette {
+func parsePaletteRaw(path string, config *Config) (*Palette, error) {
 	pal := NewPalette()
 
 	for _, group := range config.Palette {
@@ -74,6 +74,13 @@ func parsePaletteRaw(config *Config) *Palette {
 			colorsNums := make([]Color, 0, len(colors))
 
 			for _, color := range colors {
+				if color == "transparent" {
+					return nil, fmt.Errorf("error in palette file '%s': use of 'transparent' color is prohibited in the rules", path)
+				}
+				if color == "*" {
+					return nil, fmt.Errorf("error in palette file '%s': use of 'wildcard' color is prohibited in the rules", path)
+				}
+
 				colorsNums = append(colorsNums, pal.RegisterColorName(color))
 			}
 
@@ -82,5 +89,6 @@ func parsePaletteRaw(config *Config) *Palette {
 
 		pal.AddRuleset(NewRuleset(rules...))
 	}
-	return pal
+
+	return pal, nil
 }

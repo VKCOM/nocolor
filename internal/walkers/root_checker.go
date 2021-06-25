@@ -224,6 +224,10 @@ func (r *RootChecker) phpDocToColors(comment phpdoc.Comment) (palette.ColorConta
 
 		colorName := p.Params[0]
 
+		if colorName == "transparent" {
+			return palette.ColorContainer{}, fmt.Errorf("Use of the 'transparent' color does not make sense")
+		}
+
 		if !r.palette.ColorExists(colorName) {
 			return palette.ColorContainer{}, fmt.Errorf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName)
 		}
