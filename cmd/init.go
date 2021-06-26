@@ -8,17 +8,16 @@ import (
 	"github.com/i582/cfmt/cmd/cfmt"
 )
 
-var configTemplate = `# This is a palette file where you can write your own rules.
-# All rules are divided into groups, where one group represents an associated set of rules.
-# Each group is a pair, where the group identifier is the key, and the value is a list of rules.
-#
-# For example:
-test group:
-- red green: forbidden to call green functions from red ones
-- red blue green: ""
-# There can be several groups.
-test group 2:
-- highload no-highload: forbidden to call no-highload functions from highload ones
+var configTemplate = `# This is an example palette file; your rules should expect the same format
+# There are multiple groups (rulesets); each ruleset is a description (key) and a list of rules
+# For more info, consider https://github.com/vkcom/nocolor
+
+demo of green red from the docs:
+- green red: calling red from green is prohibited
+
+analyze performance:
+- fast slow: potential performance leak
+- fast slow-ignore slow: ""
 `
 
 // Init create template config for project.

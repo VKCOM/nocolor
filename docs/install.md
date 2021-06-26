@@ -1,49 +1,52 @@
-# Install
+# Installation
 
-### Ready binaries
 
-Go to the [releases](https://github.com/vkcom/nocolor/releases) page and download the required version.
+## Ready binaries — the easiest way
 
-### With `go get`
+Go to the [Releases](https://github.com/vkcom/nocolor/releases) page and download the latest version for your OS.
 
-To build with `go get` you need [Golang 1.16+](https://golang.org/).
-
-After installation, just run the following command:
-
-```sh
-$ go get -v github.com/vkcom/nocolor
+Check that it launches correctly:
+```bash
+nocolor version
 ```
 
-And **NoColor** will be installed to `$GOPATH/bin/nocolor`, which usually expands to `$HOME/go/bin/nocolor`.
+*(here and then, we suppose that the `nocolor` binary is available by name)*
 
-For convenience, you can add this path to the **PATH**.
+You're done! Proceed to the [Getting started](/docs/getting_started.md) page.
 
-### From source
 
-To build from source you need [Golang 1.16+](https://golang.org/).
+## With `go get`
 
-After installation, clone this repository:
-
-```sh
-$ git clone https://github.com/vkcom/nocolor
+Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed.  
+Run the following command:
+```bash
+go get -v github.com/vkcom/nocolor
 ```
 
-And in the **NoColor** source folder, run the following command:
+NoColor will be installed to `$GOPATH/bin/nocolor`, which usually expands to `$HOME/go/bin/nocolor`.
 
-```sh
-$ make build
+For convenience, you can add this folder to the **PATH**.
+
+
+## Build from source
+
+Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed.  
+Clone this repository and run `make build`:
+```bash
+git clone https://github.com/vkcom/nocolor
+cd nocolor
+make build
 ```
 
-Optionally, you can pass the name of the binary:
-
-```sh
-$ make build BIN_NAME=nocolor.bin
+Optionally, you can pass a name of the binary:
+```bash
+make build BIN_NAME=nocolor.bin
 ```
 
-A ready-to-start binary will be located in the `build` folder.
+A resulting binary will be placed in the `./build` folder.
 
-## Next steps
 
-- [Getting Started](https://github.com/vkcom/nocolor/blob/master/docs/usage.md)
-- [Description of the color concept](/docs/introducing_colors.md)
+## What's next?
+
+Proceed to the [Getting started](/docs/getting_started.md) page.
 

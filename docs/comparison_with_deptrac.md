@@ -1,218 +1,220 @@
 # Comparison with Deptrac
 
-[**Deptrac**](https://github.com/qossmic/deptrac) is a popular tool for checking architecture through the concept of layers and rules. Each layer consists of a set of classes, which are formed using different collectors. Rules are a whitelist of allowed dependencies, that is, a list of layers that can depend on other layers.
+[**Deptrac**](https://github.com/qossmic/deptrac) is a popular tool for checking architecture through the concept of layers and rules. 
 
-**NoColor** takes a slightly different path. **Deptrac** works with classes, while **NoColor** works with functions. At the same time, **NoColor** uses tag in PHPDoc instead of various collectors in the config to mark functions.
+The goal of NoColor is pretty much the same: it searches for bad architectural patterns. But [the concept of colors](/docs/introducing_colors.md) is more flexible. 
 
-This approach is more flexible, but more time-consuming since you need to mark all the colors manually, however, **NoColor** is not aimed at ensuring that as many functions as possible are marked, rather, on the contrary, colors should be used locally for strictly defined places.
+There are some fundamental differences, as NoColor was initially invented to embrace a wide range of patterns.
 
-Due to the fact that **NoColor** works at the function level, it is a candidate for testing legacy projects that have a lot of functions and few classes.
 
-### Is it possible to replace Deptrac with NoColor?
+## Deptrac finds only direct dependencies
 
-Yes, it is theoretically possible.
+<p align="center">
+    <img src="img/deptrac-nocolor-depth.png" alt="deptrac nocolor depth" height="114">
+</p>
 
-However, to do this, you need to mark all classes with colors, which can be too expensive for huge projects and if you need to change some rules, then changing colors will take more costs than changing the config in **Deptrac**.
-
-## Differences
-
-### Number of levels of nesting when checking
-
-When analyzing **Deptrac**, look only at one level.
-
-In the case of **NoColor**, the maximum nesting level is 50 colored functions (in fact, if the depth is 100, but among these 100 functions only 49 are colored, then the error can still be found).
-
-For example:
+Let's play around "controllers may not depend on models". Here is a sample working code:
 
 ```php
-<?php
-
-class Service {
-    public static function method() {
-        Controller::method();
-    }
-}
-
 class Controller {
-    public static function method() {
-        Repository::method();
+    static function act() {
+        Model::act();
     }
 }
 
-class Repository {
-    public static function method() {
-        echo 1;
+class Model {
+    static function act() {
+        // ...
     }
 }
 ```
 
-<details>
-  <summary>Deptrac config</summary>
+<details> 
+    <summary>With a `depfile.yaml`, disallowing this dependence</summary> 
 
-  ```yaml
-# depfile.yaml
+```yaml
 paths:
   - ./
-exclude_files:
-  - '#.*test.*#'
 layers:
-  - name: Service
-    collectors:
-      - type: className
-        regex: .*Service.*
-  - name: Controller
-    collectors:
-      - type: className
-        regex: .*Controller.*
-  - name: Repository
-    collectors:
-      - type: className
-        regex: .*Repository.*
+- name: Controller
+  collectors:
+  - type: className
+    regex: .*Controller.*
+- name: Model
+  collectors:
+  - type: className
+    regex: .*Model.*
 ruleset:
-  Service:
-    - Controller
-  Controller:
-    - Repository
-  ```
+  # nothing here
+  # (it's a white list, that's why all dependencies are denied)
+```
 </details>
 
-Here the `Service` class depends on the `Repository` at a depth of 2 and therefore **Deptrac** does not find an error, although this dependency is not allowed in the config.
+Here Deptrac shows a violation, as expected.
 
-Let's take a look at the same example for **NoColor**.
-
+**But if we insert an intermediate call, the violation won't be triggered**:
 ```php
-// palette.yaml
-// -
-//   - "controller": ""
-// -
-//   - "service repository": "Service -> Repository dependency not allowed."
-
-<?php
-
-/**
- * @color service
- */
-class Service {
-    public static function method() {
-        Controller::method();
-    }
-}
-
-/**
- * @color controller
- */
 class Controller {
-    public static function method() {
-        Repository::method();
+    static function act() {
+        Intermediate::callModel();
     }
 }
 
-/**
- * @color repository
- */
-class Repository {
-    public static function method() {
-        echo 1;
+class Intermediate {
+    static function callModel() {
+        Model::act();
+    }
+}
+
+class Model {
+    static function act() {
+        // ...
     }
 }
 ```
 
-**NoColor** can find the following error here:
+As pointed out, Deptrac finds only direct calls. It means, that any layer of abstraction will suddenly break the logic — while we actually didn't get rid of the dependency, we've just added some abstractions to our code.
 
-```
-Error at the stage of checking colors
-   test.php:25  in function Repository::method
-
-service repository => Service -> Repository dependency not allowed.
-  This color rule is broken, call chain:
-Service::method@service -> Controller::method -> Repository::method@repository
-```
-
-### Type inference and return types
-
-**Deptrac** does not do type inference, which is why quite a few dependencies can be lost.
-
-**NoColor** makes type inference, which can cover 90% of possible dependencies.
-
-> Please note that since PHP is a dynamically typed language, it is impossible to infer types always and everywhere.
-
-For example:
-
+**NoColor will find this dependency at any depth**. Let's colorize our code:
 ```php
-<?php
+/** @color controller */
+class Controller { /* ... */ }
 
-class Something {
-    private Repository $repository;
+/* ... */
 
-    public function __construct() {
-        $this->repository = new Repository;
-    }
+/** @color model */
+class Model { /* ... */ }
+```
 
-    public function getRepository(): Repository {
-        return $this->repository;
+Having this ruleset in the `palette.yaml`:
+```yaml
+compare with deptrac:
+- controller model: controllers may not depend on models
+```
+
+The `nocolor check` command will trigger an expected error, printing out a call chain:
+
+<p align="center">
+    <img src="img/screen-deptrac-chain.png" alt="nocolor deptrac chain" height="66">
+</p>
+
+It doesn't matter, how many intermediate calls will occur between the desired colors: NoColor will reveal the dependency at any depth. That intermediate calls can also be colored: it won't affect the result due to pattern matching.
+
+
+## NoColor supports type inferring and non-static methods
+
+In the previous example, we called a static function `Model::act()`.  
+Now, let's slightly modify our code converting it to an instance method:
+```php
+function getModel() {
+    return new Model;
+}
+
+class Controller {
+    function act() {
+        getModel()->act();
     }
 }
 
-/**
- * @color repository
- */
-class Repository {
-    public function do() {
-        echo 1;
-    }
-}
-
-/**
- * @color service
- */
-class Service {
-    public static function method() {
-        $something = new Something;
-        $repository = $something->getRepository();
-        $repository->do();
+class Model {
+    function act() {
+        // ...
     }
 }
 ```
 
-**Deptrac** thinks this code is correct, but the `Service` actually depends on the `Repository` because the `Something::getRepository` method returns an object of the `Repository` class.
+**Deptrac won't find an error here** regardless of the `Model::act()` being called directly from the `Controller::act()`.
 
-**NoColor** found the following error:
+**NoColor will infer types** and fire the desired error (don't forget to add `@color` tags):
 
+<p align="center">
+    <img src="img/screen-deptrac-infer.png" alt="nocolor infer" height="66">
+</p>
+
+Type inferring includes analyzing PHPDocs and control flow, like foreach and array indexing:
+```php
+/** @return Model[][] */
+function getModelsMatrix() { /* ... */ }
+
+foreach (getModelsMatrix() as $row)
+    $row[0]->act();     // bound correctly to Model::act()
 ```
-Error at the stage of checking colors
-   script.php:20  in function Repository::do
 
-service repository => Service -> Repository dependency not allowed.
-  This color rule is broken, call chain:
-Service::method@service -> Repository::do@repository
+If you face some problem with inferring, you can always help NoColor by adding the `@var` PHPDoc.
+
+
+## Deptrac matches names by regexps, NoColor needs PHPDoc tags
+
+Typically, the `depfile.yaml` enumerates collectors with regular expressions on class names, like
+```yaml
+collectors:
+- type: className
+  regex: .*Controller.*
 ```
 
-### Whitelist vs Blacklist with Exclusions
+Hence, **Deptrac doesn't require you to modify your PHP code** — whereas **NoColor enforces you to add `@color`** PHPDoc tags above functions/classes.
 
-**Deptrac** uses a whitelist that allows one layer to be dependent on another.
+These are two different approaches, and there is no definite answer, which one is better.  
+On the one hand, you can't forget to add a tag if a newly-created class is automatically revealed by a regexp lookup.  
+On the other, explicit behavior is often treated to be better than implicit.
 
-**NoColor** uses a blacklist, which actually consists of rules that prohibit calling one function from another. Also, in these rules, you can write exclusion rules for specific cases.
+What's really definite is the way of thinking while switching to colors from regexps.
 
-### Performance
 
-**Deptrac** runs slightly faster on personal computers thanks to the above cut corners.
+## In NoColor, exceptions are just more specific rules
 
-**NoColor**, due to the fact that it does a lot of additional things, loses somewhat in speed. However, unlike **Deptrac**, **NoColor** is easy to parallelize, which allows you to use all the powers provided. On development servers, **NoColor** can run faster than **Deptrac**.
+If a color rule `controller model` is broken, you can suppress it by adding a more specific color:
+```php
+/** @color controller */
+class Controller {
+    static function act() {
+        Intermediate::callModel();
+    }
+}
 
-## Conclusions
+class Intermediate {
+    static function callModel() {
+        Model::act();
+    }
+}
 
-1. **Deptrac** works with classes and **NoColor** works with functions;
-2. In **Deptrac**, all configuration takes place in the config using various selectors, and in **NoColor**, using annotations over functions, and a palette in the form of a config file;
-3. **Deptrac** only supports one level of nesting, and **NoColor** can check in depth for 50 color functions;
-4. In **Deptrac**, due to the lack of type inference, not all dependencies can be found, and in **NoColor** there is type inference, so all possible calls will be found;
-5. **NoColor** is better suited for analyzing legacy projects where many functions and few classes are used;
-6. **Deptrac** works faster on personal computers, but in one thread, and **NoColor** is easily parallelized and can work at all the capacities provided;
-7. **Deptrac** provides various nice and visual views like Graphviz, **NoColor** doesn't;
-8. **Deptrac** provides many collectors, which can greatly simplify the work with the tool when **NoColor** has only one way to set the color — in PHPDoc.
+/** @color model */
+class Model {
+    static function act() {}
+}
+```
 
-As a result, **NoColor** is not a replacement for **Deptrac**, but its addition aimed at deeper validation of function calls.
+This is an error, but if you want (whyever) to allow this, you can add a rule
+```yaml
+controller ignore-model-call model: ""
+```
 
-## Next steps
+Having marked 
+```php
+/** @color ignore-model-call */
+static function callModel() { /* ... */ }
+```
 
-- [How to contribute](https://github.com/vkcom/nocolor/blob/master/CONTRIBUTING.md)
-- [Description of the color concept](/docs/introducing_colors.md)
+this particular chain will match a more specific newly-created selector, suppressing an error.
+
+So, **NoColor doesn't have the "exceptions" term**, it's just the way of thinking.
+
+Deptrac has `exclude_files` and `skip_violations` in its config, which also work by regexps. That settings are enough for configuring exceptions, at least because Deptrac analyzes only direct dependencies.
+
+[Read more about colors and exceptions](/docs/introducing_colors.md#okay-its-the-way-to-deny-some-patterns-but-how-to-allow-exceptions)
+
+
+## Performance
+
+Deptrac runs slightly faster on personal computers thanks to the above cut corners.
+
+NoColor does a lot of additional things, that's why it loses somewhat in speed. However, it is easily parallelized. Typically, on development servers with many CPU cores, NoColor can run faster than Deptrac.
+
+
+## Is it possible to replace Deptrac with NoColor in an existing project?
+
+Theoretically, it is possible.
+
+However, you'll need to mark all needed classes with colors.  
+Also, there is about 100% chance that NoColor will find indirect dependencies, which exist but aren't revealed by Deptrac.  
+

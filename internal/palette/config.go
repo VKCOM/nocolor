@@ -47,11 +47,13 @@ func ReadPaletteFileYAML(path string, data []byte) (*Palette, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`could not parse palette file '%s'. 
 The correct format is:
+
 ruleset description:
 - rule
 - rule
+
 (optionally with many rulesets)
-In .yaml syntax, it's a map from string key (description) to list (rules)`, path)
+In .yaml syntax, it's a map from a string key (description) to a list (rules)`, path)
 	}
 
 	return parsePaletteRaw(path, config)

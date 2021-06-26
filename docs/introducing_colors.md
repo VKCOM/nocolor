@@ -6,12 +6,12 @@ The idea behind NoColor is pretty simple:
 
 Color mixing means the **combination of colors produced by function calls**.
 
-Let's write code, when the *green* `f1` calls `f2`, and `f2` calls the *red* `f3`:
+Let's write code, where the *green* `f1` calls `f2`, and `f2` calls the *red* `f3`:
 ```php
 /** @color green */
 function f1() { f2(); }
 
-// this function has no color (by default)
+// this function has no color (it's transparent)
 function f2() { f3(); }
 
 /** @color red */
@@ -44,7 +44,7 @@ It works like pattern matching. A color chain `green yellow blue red` would have
 
 ## Start thinking in colors: find performance leaks
 
-Let's assume, that we have some *slow* functions (which do DB inserts or other slow work), and we have some *performance critical* (or *fast*) functions, that are supposed to be executed as fast as possible. 
+Let's assume, that we have some *slow* functions (which do DB inserts or other slow work), and we have some *performance-critical* (or *fast*) functions, that are supposed to be executed as fast as possible. 
 
 To make it visual, let's state, that *slow functions are red, fast functions are green*:
 
@@ -82,16 +82,18 @@ If we draw its call graph, we'll see this:
     <img src="img/call-graph-colored.png" alt="call graph colored" height="208">
 </p>
 
-This is a potential performance leak! 
+This is a potential performance leak!
+
+**Tip**. The [Getting started](/docs/getting_started.md) page contains this example. Copy-paste a PHP code from there to have a live experiment here and below.
 
 
 <p><br></p>
 
 ## Not just *red* and *green*, but anything you want
 
-The secret is that we used red and green *only* to visualize the metaphone "red are slow, green are fast".
+The secret is that we used red and green *only* to visualize the metaphor "red are slow, green are fast".
 
-But! We can use **slow** and **fast** as colors directly:
+But! We can use **slow** and **fast** colors directly:
 ```php
 /** @color slow */
 function appendLogToTable() {}
@@ -115,6 +117,8 @@ fast slow: potential performance leak
 
 A function can even have multiple colors simultaneously. For example, *api-entrypoint* and *slow*.
 
+**Tip**. In the example from the [Getting started](/docs/getting_started.md) page, replace *green* and *red* with *fast* and *slow*, and run `nocolor check` to see an error. 
+
 
 <p><br></p>
 
@@ -132,7 +136,7 @@ What else can we describe? Any patterns we want! For example, controllers may no
 controller model: controllers may not depend on models
 ```
 
-Once we have all our controllers annotated by the `@color controller`, and the same for models, NoColor will check dependencies for this rule at any depth.
+Once we have all our controllers annotated by the `@color controller` and the same for models, NoColor will check dependencies for this rule at any depth.
 
 Some other examples:
 ```yaml
@@ -163,7 +167,7 @@ Here is the trick. Think of calling methods like nesting HTML elements, where co
     <img src="img/call-graph-html.png" alt="call graph html" width="846">
 </p>
 
-If we try to express "performance leak" it in CSS manner, we'd do it like this:
+If we try to express "performance leak" it in a CSS manner, we'd do it like this:
 ```css
 .fast .slow {
     error-text: "potential performance leak";
@@ -232,12 +236,14 @@ only the first chain will be suppressed, and the second will lead to an error, a
 f g2 h => don't fetch data from server-side rendering 
 ```
 
+**Tip**. Add `@color slow-ignore` above `Logger::debug()` from the example, and launch NoColor. There will be no error anymore: instead, you'll see "Your code is perfect" :)
+
 
 <p><br></p>
 
 ## `@color` can be placed above classes
 
-If the `@color` PHPDoc tag is places above a class, it works like if it was placed above every method of this class.
+If the `@color` PHPDoc tag is placed above a class, it works as if it was placed above every method of this class.
 ```php
 /**
  * @color low-level
@@ -263,7 +269,7 @@ Hence, you can easily describe patterns you want to avoid:
 VKApi\Handlers VKDesktop\Templates: using UI from api is strange
 ```
 
-Functions and classes are not auto-colored with namespaces: you still need to append the `@color` above the exact you want.
+Classes are not auto-colored with namespaces: you still need to append `@color` above the exact you want. Why? Mostly not to slow down analysis speed: when a full call graph is colored, a combinatorial explosion of different colored paths occurs. A suggestion is to **colorize only those classes you really want to check**. Typically, 99% of classes/functions are supposed to be left transparent.
 
 
 <p><br></p>
@@ -304,14 +310,14 @@ class LegacyIDMapper { /* ... */ }
 function transformLegacyUser(User $user) { /* ... */ }  
 ```
 
-And add these ruleset to the palette:
+And add this ruleset to the palette:
 ```yaml
 Implementing internal keyword for DBLayer:
 - db-internals: don't access db implementation layer directly
 - db-public db-internals: ""
 ```
 
-We are done! NoColor will now find any direct calls. Of course, you could use namespaces like colors here also. Of course, if you really-really want to call an internal method from a particular function, you could add a rule
+We are done! NoColor will now find any direct calls. Of course, you could use namespaces like colors here also. Of course, if you really really want to call an internal method from a particular function, you could add a rule
 ```yaml
 please-allow-internals-here db-internals: "" 
 ```
@@ -329,7 +335,7 @@ This syntax is pretty much valid:
  * @color allow-db
  */ 
 ```
-It's not a bug, it's a feature, because colors are something like "tags" that are independent. The order of `@color` tags matters: when a call chain is converted to a color chain, all colors are appended in this order.
+It's not a bug, it's a feature because colors are something like "tags" that are independent. The order of `@color` tags matters: when a call chain is converted to a color chain, all colors are appended in this order.
 
 Note, that you should write many `@color` PHPDoc tags instead of enumerating colors in one tag:
 ```
@@ -373,9 +379,9 @@ And such a call chain:
     <img src="img/conflict-resolution.png" alt="conflict resolution" height="110">
 </p>
 
-On the one hand, this call chain matches `fast slow` is an error. From the other, it matches `ssr allow-db db` that clears an error. How does NoColor deal with such cases?
+On the one hand, this call chain matches `fast slow` is an error. From the other, it matches `ssr allow-db db` which clears an error. How does NoColor deal with such cases?
 
-Here is the thing. When you think about performance leaks, you think of rules and exceptions describing this particular pattern. When you touch ssr, you don't concern anything else. In other words, **these are two independent lists of rules**, which must work separately.
+Here is the thing. When you think about performance leaks, you think of rules and exceptions describing this particular pattern. When you touch ssr, you don't concern about anything else. In other words, **these are two independent lists of rules**, which must work separately.
 
 When you write `palette.yaml`, you actually operate different lists:
 ```yaml
@@ -388,32 +394,7 @@ preventing data fetching from ssr:
 - # with exceptions
 ```
 
-
-<p><br></p>
-
-## Format of the `palette.yaml` file
-
-Here is a working example. Two rulesets, with two rules in each:
-```yaml
-finding performance leaks:
-- fast slow: potential performance leak 
-- fast slow-ignore slow: ""
-
-# you can add optional comments in yaml
-preventing data fetching from ssr:  
-- ssr db: don't fetch data from templates 
-- ssr allow-db db: ""
-```
-
-In .yaml syntax, it's a map from a string key (ruleset description) to a list (rules of that ruleset). 
-
-On the top-level, there are one or more rulesets. Each ruleset is a list of color mixing rules. Each rule is a string key, and a string value. A key is a color pattern to be matched against every call chain. A value is an error message, or an empty string, meaning there is no error.
-
-The necessity of having multiple rulesets comes from conflict resolution, as mentioned above. Making every ruleset a list (not a sub-object without dashes) is also important, because the order of rules is meaningful (in case of a sub-object, that order would be missed).
-
-Since it's a .yaml format, you can use quotes if you prefer. 
-
-*Transparent* color and wildcard can't occur in selectors.  
+**Tip**. Consider the [Configuration](/docs/configuration.md#format-of-the-paletteyaml-file) page for a detailed .yaml format description.
 
 
 <p><br></p>
@@ -437,7 +418,7 @@ function respondWithError() {
 }
 ```
 
-`respondWithError()` is called from many places when the execution can't be recovered, but the whole site is reachable from it because of `router()`. A huge part of a call graph becomes a one big connectivity component, where every function is reachable from any another. This breaks almost every color rule, as NoColor finds a connection through routing.
+`respondWithError()` is called from many places when the execution can't be recovered, but the whole site is reachable from it because of `router()`. A huge part of a call graph becomes one big connectivity component, where every function is reachable from any other. This breaks almost every color rule, as NoColor finds a connection through routing.
 
 To manage this, we may exclude `router()` from a call graph completely, which splits one connectivity in many:
 ```php
@@ -447,28 +428,13 @@ To manage this, we may exclude `router()` from a call graph completely, which sp
 function router() { /* ... */ } 
 ```
 
-Hopefully, you'd never need this color in your projects.
-
-
-<p><br></p>
-
-## Limitations and speed
-
-The number of groups, colors and selectors in unlimited, though the more functions are colored — the slower NoColor would work. That's the main reason why namespaces are not auto-colored: when a full call graph is colored, a combinatorial explosion of different colored paths occur. A suggestion is to **colorize only those patterns that you really want to check** (typically 99% of functions are supposed to be left transparent).  
-
-All available call chains are calculated **on a static analysis phase**, there is no runtime overhead. NoColor uses some tricky internal optimizations to avoid useless depth searching in a call graph. Every possible colored call chain is matched against all rules in the palette.
-
-Remember, that **PHP is an interpreted language** and allows constructions that can't be statically analyzed. If you write something like `SomeClass::$any_function()` or `new $class_name`, NoColor can't do anything about it.
-
 **Recursive components** in a call graph are implicitly joined into one graph node with all colors merged. Hence, if a part of your call graph looks like this:
 
 <p align="center">
     <img src="img/recursive-component.png" alt="recursive component" height="130">
 </p>
 
-NoColor won't deeply analyze such construction: it will just assume *"everything is reachable from everything inside it"* and join it into one graph node colored with both *green* and *red*. That's the reason behind a `@color remover` described earlier: it helps split recursive components.
-
-Also, NoColor deeply analyzes your code by performing **type inferring**, that's why it could be found a bit slower than Deptrac, which doesn't have such an option.
+NoColor won't deeply analyze such construction: it will just assume *"everything is reachable from everything inside it"* and join it into one graph node colored with both *green* and *red*. That's the reason behind a `@color remover`: it helps split recursive components.
 
 
 <p><br></p>
@@ -477,7 +443,7 @@ Also, NoColor deeply analyzes your code by performing **type inferring**, that's
 
 NoColor analyzes not only `A::staticMethod()` calls, but `$a->instanceMethod()` call also. To make this possible, we need to know the type of `$a` to correctly locate the class containing `instanceMethod`. 
 
-NoColor is built on top of [NoVerify](https://github.com/VKCOM/noverify) (a PHP linter from VK.com Team) and therefore includes lots of logic to infer types in your PHP code. It analyzes PHPDocs, simple control flow, array access, foreach and so on. 
+NoColor is built on top of [NoVerify](https://github.com/VKCOM/noverify) (a PHP linter from VK.com Team) and therefore includes lots of logic to infer types in your PHP code. It analyzes PHPDocs, simple control flow, array access, foreach, and so on. 
 ```php
 /**
  * @param A[][] $matrix
@@ -488,7 +454,7 @@ function f($matrix) {
 } 
 ```
 
-If you face some problem with inferring, you can always help NoColor by adding the `@var` PHPDoc:
+Typically, if an IDE can suggest instance properties after the `->`, NoColor will detect a class correctly also. However, if you face any problem with inferring, you can always help NoColor by adding the `@var` PHPDoc:
 ```php
 function debug(array $options) {
   /** @var DBLayer $logger */
@@ -496,6 +462,7 @@ function debug(array $options) {
   $logger->addToLogTable(...);
 }
 ```
+
 
 <p><br></p>
 
