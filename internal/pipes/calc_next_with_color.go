@@ -47,7 +47,7 @@ func CalcNextWithColor(graph *callgraph.Graph) {
 }
 
 func eachComponent(component, edges callgraph.Nodes) {
-	nextColoredUniq := map[*callgraph.Node]struct{}{}
+	nextColoredUniq := make(map[*callgraph.Node]struct{}, 10)
 
 	// If an edge is colored, append this edge.
 	// If not, append NextWithColors from this edge.

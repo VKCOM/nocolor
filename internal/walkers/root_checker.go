@@ -161,6 +161,7 @@ func (r *RootChecker) handleFunctionStmt(n *ir.FunctionStmt) {
 	colors, err := r.handlePhpDocColors(n.Doc)
 	if err != nil {
 		r.ctx.Report(n.FunctionName, linter.LevelError, "errorColor", err.Error())
+		return
 	}
 
 	funcName, ok := solver.GetFuncName(r.ctx.ClassParseState(), &ir.Name{Value: n.FunctionName.Value})

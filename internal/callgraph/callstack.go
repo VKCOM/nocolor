@@ -40,7 +40,7 @@ func (c *CallstackOfColoredFunctions) Append(fun *Node) {
 	c.Stack = append(c.Stack, fun)
 	c.IndexSet[fun] = struct{}{}
 	c.ColorsChain = append(c.ColorsChain, fun.Function.Colors.Colors...)
-	c.recalcMask()
+	c.recalcMask(fun, true)
 }
 
 // PopBack removes the last function from the stack.
@@ -53,7 +53,7 @@ func (c *CallstackOfColoredFunctions) PopBack() {
 	c.Stack = c.Stack[:len(c.Stack)-1]
 	delete(c.IndexSet, back)
 	c.ColorsChain = c.ColorsChain[:len(c.ColorsChain)-len(back.Function.Colors.Colors)]
-	c.recalcMask()
+	c.recalcMask(back, false)
 }
 
 // Contains checks for the existence of the passed node.
@@ -62,6 +62,18 @@ func (c *CallstackOfColoredFunctions) Contains(fun *Node) bool {
 	return ok
 }
 
-func (c *CallstackOfColoredFunctions) recalcMask() {
+func (c *CallstackOfColoredFunctions) recalcMask(fun *Node, add bool) {
+	colors := fun.Function.Colors
+	if colors.Empty() {
+		return
+	}
+
+	if add {
+		for _, color := range colors.Colors {
+			c.ColorsMasks = c.ColorsMasks.Add(color)
+		}
+		return
+	}
+
 	c.ColorsMasks = palette.NewColorMasks(c.ColorsChain)
 }
