@@ -71,11 +71,15 @@ func (ctx *GlobalContext) Decode(r io.Reader, filename string) error {
 
 // UpdateMeta recovers data by collecting it from each file.
 func (ctx *GlobalContext) UpdateMeta(f *FileMeta, filename string) {
-	for _, fun := range f.Functions.Raw() {
-		ctx.Functions.Add(fun)
+	if f.Functions != nil {
+		for _, fun := range f.Functions.Raw() {
+			ctx.Functions.Add(fun)
+		}
 	}
 
-	for _, class := range f.Classes.Raw() {
-		ctx.Classes.Add(class)
+	if f.Classes != nil {
+		for _, class := range f.Classes.Raw() {
+			ctx.Classes.Add(class)
+		}
 	}
 }
