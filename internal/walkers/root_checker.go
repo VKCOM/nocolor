@@ -26,8 +26,7 @@ type RootChecker struct {
 	palette   *palette.Palette
 	globalCtx *GlobalContext
 
-	fileFunction       *symbols.Function
-	currentClassColors palette.ColorContainer
+	fileFunction *symbols.Function
 
 	colorTag string
 }
@@ -67,29 +66,6 @@ func (r *RootChecker) BeforeEnterFile() {
 	r.fileFunction = fun
 }
 
-// BeforeEnterNode
-func (r *RootChecker) BeforeEnterNode(n ir.Node) {
-	switch n := n.(type) {
-	case *ir.ClassStmt:
-		r.setCurrentClassColors(n.ClassName, n.Doc)
-	case *ir.InterfaceStmt:
-		r.setCurrentClassColors(n.InterfaceName, n.Doc)
-	case *ir.TraitStmt:
-		r.setCurrentClassColors(n.TraitName, n.Doc)
-	}
-}
-
-func (r *RootChecker) setCurrentClassColors(name ir.Node, doc phpdoc.Comment) {
-	color, err := r.phpDocToColors(doc)
-	if err != nil {
-		r.ctx.Report(name, linter.LevelError, "errorColor", err.Error())
-		r.currentClassColors = palette.ColorContainer{}
-		return
-	}
-
-	r.currentClassColors = color
-}
-
 // AfterEnterNode
 func (r *RootChecker) AfterEnterNode(n ir.Node) {
 	switch n := n.(type) {
@@ -101,12 +77,27 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 		r.handleStaticCall(n, nil)
 	case *ir.MethodCallExpr:
 		r.handleMethodCall(n, nil, r)
+
+	case *ir.ClassStmt:
+		r.handleClassStmt(n.ClassName, n.Doc)
+	case *ir.InterfaceStmt:
+		r.handleClassStmt(n.InterfaceName, n.Doc)
+	case *ir.TraitStmt:
+		r.handleClassStmt(n.TraitName, n.Doc)
+
 	case *ir.ClassMethodStmt:
 		r.handleClassMethodStmt(n)
 	case *ir.FunctionStmt:
 		r.handleFunctionStmt(n)
 	case *ir.ImportExpr:
 		r.handleImportExpr(n)
+	}
+}
+
+func (r *RootChecker) handleClassStmt(className ir.Node, doc phpdoc.Comment) {
+	errs := r.checkPhpDocColors(doc)
+	for _, err := range errs {
+		r.ctx.Report(className, linter.LevelError, "errorColor", err)
 	}
 }
 
@@ -158,57 +149,20 @@ func (r *RootChecker) getImportAbsPath(path string) (string, bool) {
 }
 
 func (r *RootChecker) handleFunctionStmt(n *ir.FunctionStmt) {
-	colors, err := r.handlePhpDocColors(n.Doc)
-	if err != nil {
-		r.ctx.Report(n.FunctionName, linter.LevelError, "errorColor", err.Error())
-		return
+	errs := r.checkPhpDocColors(n.Doc)
+	for _, err := range errs {
+		r.ctx.Report(n.FunctionName, linter.LevelError, "errorColor", err)
 	}
-
-	funcName, ok := solver.GetFuncName(r.ctx.ClassParseState(), &ir.Name{Value: n.FunctionName.Value})
-	if !ok {
-		return
-	}
-
-	fun, ok := r.globalCtx.Functions.Get(funcName)
-	if !ok {
-		return
-	}
-
-	fun.Colors = colors
 }
 
 func (r *RootChecker) handleClassMethodStmt(n *ir.ClassMethodStmt) {
-	colors, err := r.handlePhpDocColors(n.Doc)
-	if err != nil {
-		r.ctx.Report(n.MethodName, linter.LevelError, "errorColor", err.Error())
+	errs := r.checkPhpDocColors(n.Doc)
+	for _, err := range errs {
+		r.ctx.Report(n.MethodName, linter.LevelError, "errorColor", err)
 	}
-
-	fun, ok := r.getCurrentFunc()
-	if !ok {
-		return
-	}
-
-	fun.Colors = colors
 }
 
-func (r *RootChecker) handlePhpDocColors(comment phpdoc.Comment) (palette.ColorContainer, error) {
-	colors, err := r.phpDocToColors(comment)
-	if err != nil {
-		return palette.ColorContainer{}, err
-	}
-
-	if r.ctx.ClassParseState().CurrentClass != "" && !r.currentClassColors.Empty() {
-		for _, color := range r.currentClassColors.Colors {
-			colors.Add(color)
-		}
-	}
-
-	return colors, nil
-}
-
-func (r *RootChecker) phpDocToColors(comment phpdoc.Comment) (palette.ColorContainer, error) {
-	var colors palette.ColorContainer
-
+func (r *RootChecker) checkPhpDocColors(comment phpdoc.Comment) (errs []string) {
 	for _, part := range comment.Parsed {
 		p, ok := part.(*phpdoc.RawCommentPart)
 		if !ok {
@@ -220,23 +174,24 @@ func (r *RootChecker) phpDocToColors(comment phpdoc.Comment) (palette.ColorConta
 		}
 
 		if len(p.Params) == 0 {
-			return palette.ColorContainer{}, fmt.Errorf("An empty '@%s' tag value", p.Name())
+			errs = append(errs, fmt.Sprintf("An empty '@%s' tag value", p.Name()))
+			continue
 		}
 
 		colorName := p.Params[0]
 
 		if colorName == "transparent" {
-			return palette.ColorContainer{}, fmt.Errorf("Use of the 'transparent' color does not make sense")
+			errs = append(errs, "Use of the 'transparent' color does not make sense")
+			continue
 		}
 
 		if !r.palette.ColorExists(colorName) {
-			return palette.ColorContainer{}, fmt.Errorf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName)
+			errs = append(errs, fmt.Sprintf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName))
+			continue
 		}
-
-		colors.Add(r.palette.GetColorByName(colorName))
 	}
 
-	return colors, nil
+	return errs
 }
 
 func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, v ir.Visitor) {
@@ -325,9 +280,9 @@ func (r *RootChecker) handleNew(n *ir.NewExpr) {
 
 func (r *RootChecker) handleMethod(name string, classType types.Map) {
 	var calledMethodInfo solver.FindMethodResult
+	var ok bool
 
 	found := classType.Find(func(typ string) bool {
-		var ok bool
 		calledMethodInfo, ok = solver.FindMethod(r.ctx.ClassParseState().Info, typ, name)
 		return ok
 	})

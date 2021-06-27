@@ -16,6 +16,7 @@ type GlobalContext struct {
 	Info *meta.Info
 
 	Functions *symbols.Functions
+	Classes   *symbols.Classes
 }
 
 // NewGlobalContext creates a new context.
@@ -23,6 +24,7 @@ func NewGlobalContext(info *meta.Info) *GlobalContext {
 	return &GlobalContext{
 		Info:      info,
 		Functions: symbols.NewFunctions(),
+		Classes:   symbols.NewClasses(),
 	}
 }
 
@@ -69,7 +71,15 @@ func (ctx *GlobalContext) Decode(r io.Reader, filename string) error {
 
 // UpdateMeta recovers data by collecting it from each file.
 func (ctx *GlobalContext) UpdateMeta(f *FileMeta, filename string) {
-	for _, fun := range f.Functions.Raw() {
-		ctx.Functions.Add(fun)
+	if f.Functions != nil {
+		for _, fun := range f.Functions.Raw() {
+			ctx.Functions.Add(fun)
+		}
+	}
+
+	if f.Classes != nil {
+		for _, class := range f.Classes.Raw() {
+			ctx.Classes.Add(class)
+		}
 	}
 }
