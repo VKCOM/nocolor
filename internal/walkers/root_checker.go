@@ -175,16 +175,19 @@ func (r *RootChecker) checkPhpDocColors(comment phpdoc.Comment) (errs []error) {
 
 		if len(p.Params) == 0 {
 			errs = append(errs, fmt.Errorf("An empty '@%s' tag value", p.Name()))
+			continue
 		}
 
 		colorName := p.Params[0]
 
 		if colorName == "transparent" {
 			errs = append(errs, fmt.Errorf("Use of the 'transparent' color does not make sense"))
+			continue
 		}
 
 		if !r.palette.ColorExists(colorName) {
 			errs = append(errs, fmt.Errorf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName))
+			continue
 		}
 	}
 
