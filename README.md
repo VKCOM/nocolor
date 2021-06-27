@@ -1,6 +1,6 @@
 <img width="350" alt="image" src="https://user-images.githubusercontent.com/51853996/122410502-a543ff00-cf8c-11eb-9b23-6b0c6e900f1e.png">
 
-[![](https://github.com/vkcom/nocolor/workflows/Go/badge.svg)](https://github.com/vkcom/nocolor/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/vkcom/nocolor)](https://goreportcard.com/report/github.com/vkcom/nocolor) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+[![](https://github.com/vkcom/nocolor/workflows/Go/badge.svg)](https://github.com/vkcom/nocolor/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/VKCOM/nocolor)](https://goreportcard.com/report/github.com/vkcom/nocolor) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
 
 
 # NoColor — validate the architecture of your PHP project
