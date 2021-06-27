@@ -97,7 +97,7 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 func (r *RootChecker) handleClassStmt(className ir.Node, doc phpdoc.Comment) {
 	errs := r.checkPhpDocColors(doc)
 	for _, err := range errs {
-		r.ctx.Report(className, linter.LevelError, "errorColor", err.Error())
+		r.ctx.Report(className, linter.LevelError, "errorColor", err)
 	}
 }
 
@@ -151,18 +151,18 @@ func (r *RootChecker) getImportAbsPath(path string) (string, bool) {
 func (r *RootChecker) handleFunctionStmt(n *ir.FunctionStmt) {
 	errs := r.checkPhpDocColors(n.Doc)
 	for _, err := range errs {
-		r.ctx.Report(n.FunctionName, linter.LevelError, "errorColor", err.Error())
+		r.ctx.Report(n.FunctionName, linter.LevelError, "errorColor", err)
 	}
 }
 
 func (r *RootChecker) handleClassMethodStmt(n *ir.ClassMethodStmt) {
 	errs := r.checkPhpDocColors(n.Doc)
 	for _, err := range errs {
-		r.ctx.Report(n.MethodName, linter.LevelError, "errorColor", err.Error())
+		r.ctx.Report(n.MethodName, linter.LevelError, "errorColor", err)
 	}
 }
 
-func (r *RootChecker) checkPhpDocColors(comment phpdoc.Comment) (errs []error) {
+func (r *RootChecker) checkPhpDocColors(comment phpdoc.Comment) (errs []string) {
 	for _, part := range comment.Parsed {
 		p, ok := part.(*phpdoc.RawCommentPart)
 		if !ok {
@@ -174,19 +174,19 @@ func (r *RootChecker) checkPhpDocColors(comment phpdoc.Comment) (errs []error) {
 		}
 
 		if len(p.Params) == 0 {
-			errs = append(errs, fmt.Errorf("An empty '@%s' tag value", p.Name()))
+			errs = append(errs, fmt.Sprintf("An empty '@%s' tag value", p.Name()))
 			continue
 		}
 
 		colorName := p.Params[0]
 
 		if colorName == "transparent" {
-			errs = append(errs, fmt.Errorf("Use of the 'transparent' color does not make sense"))
+			errs = append(errs, "Use of the 'transparent' color does not make sense")
 			continue
 		}
 
 		if !r.palette.ColorExists(colorName) {
-			errs = append(errs, fmt.Errorf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName))
+			errs = append(errs, fmt.Sprintf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName))
 			continue
 		}
 	}
