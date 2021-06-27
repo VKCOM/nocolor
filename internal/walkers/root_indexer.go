@@ -8,7 +8,8 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-
+	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/vkcom/nocolor/internal/palette"
 	"github.com/vkcom/nocolor/internal/symbols"
 )
 
@@ -19,15 +20,20 @@ type RootIndexer struct {
 
 	ctx       *linter.RootContext
 	meta      FileMeta
+	palette   *palette.Palette
 	globalCtx *GlobalContext
+
+	colorTag string
 }
 
 // NewRootIndexer creates a new walker.
-func NewRootIndexer(globalCtx *GlobalContext, ctx *linter.RootContext) *RootIndexer {
+func NewRootIndexer(pal *palette.Palette, globalCtx *GlobalContext, ctx *linter.RootContext, colorTag string) *RootIndexer {
 	return &RootIndexer{
 		ctx:       ctx,
 		globalCtx: globalCtx,
 		meta:      NewFileMeta(),
+		palette:   pal,
+		colorTag:  colorTag,
 	}
 }
 
@@ -58,6 +64,39 @@ func (r *RootIndexer) AfterLeaveFile() {
 	r.globalCtx.UpdateMeta(&r.meta, "")
 }
 
+func (r *RootIndexer) phpDocToColors(comment phpdoc.Comment) palette.ColorContainer {
+	var colors palette.ColorContainer
+
+	for _, part := range comment.Parsed {
+		p, ok := part.(*phpdoc.RawCommentPart)
+		if !ok {
+			continue
+		}
+
+		if p.Name() != r.colorTag {
+			continue
+		}
+
+		if len(p.Params) == 0 {
+			continue
+		}
+
+		colorName := p.Params[0]
+
+		if colorName == "transparent" {
+			continue
+		}
+
+		if !r.palette.ColorExists(colorName) {
+			continue
+		}
+
+		colors.Add(r.palette.GetColorByName(colorName))
+	}
+
+	return colors
+}
+
 // BeforeEnterNode collects information about functions and methods.
 func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 	external := strings.Contains(r.ctx.Filename(), "phpstorm-stubs")
@@ -66,19 +105,70 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 	}
 
 	switch n := n.(type) {
+	case *ir.ClassStmt:
+		name := r.ctx.ClassParseState().Namespace + "\\" + n.ClassName.Value
+
+		r.meta.Classes.Add(&symbols.Class{
+			Name:   name,
+			Type:   symbols.PlainClass,
+			Pos:    r.getElementPos(n),
+			Colors: r.phpDocToColors(n.Doc),
+		})
+
+	case *ir.InterfaceStmt:
+		name := r.ctx.ClassParseState().Namespace + "\\" + n.InterfaceName.Value
+
+		r.meta.Classes.Add(&symbols.Class{
+			Name:   name,
+			Type:   symbols.Interface,
+			Pos:    r.getElementPos(n),
+			Colors: r.phpDocToColors(n.Doc),
+		})
+
+	case *ir.TraitStmt:
+		name := r.ctx.ClassParseState().Namespace + "\\" + n.TraitName.Value
+
+		r.meta.Classes.Add(&symbols.Class{
+			Name:   name,
+			Type:   symbols.Trait,
+			Pos:    r.getElementPos(n),
+			Colors: r.phpDocToColors(n.Doc),
+		})
+
 	case *ir.ClassMethodStmt:
-		class := r.ctx.ClassParseState().CurrentClass
-		methodName := class + "::" + n.MethodName.Value
+		className := r.ctx.ClassParseState().CurrentClass
+		methodName := className + "::" + n.MethodName.Value
 
 		typ := symbols.LocalFunc
 		if external {
 			typ = symbols.ExternFunc
 		}
 
+		colors := r.phpDocToColors(n.Doc)
+
+		class, ok := r.meta.Classes.Get(className)
+		if ok && !class.Colors.Empty() {
+			// We need to mix the colors in the following order,
+			// first the class colors and then the method colors.
+			//
+			// If the class has no colors, then there is no point in copying.
+			var newColors palette.ColorContainer
+
+			for _, classColor := range class.Colors.Colors {
+				newColors.Add(classColor)
+			}
+			for _, methodColor := range colors.Colors {
+				newColors.Add(methodColor)
+			}
+
+			colors = newColors
+		}
+
 		r.meta.Functions.Add(&symbols.Function{
 			Name:     methodName,
 			Type:     typ,
 			Pos:      r.getElementPos(n),
+			Colors:   colors,
 			Called:   symbols.NewFunctions(),
 			CalledBy: symbols.NewFunctions(),
 		})
@@ -102,6 +192,7 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 			Name:     funcName,
 			Type:     typ,
 			Pos:      r.getElementPos(n),
+			Colors:   r.phpDocToColors(n.Doc),
 			Called:   symbols.NewFunctions(),
 			CalledBy: symbols.NewFunctions(),
 		})

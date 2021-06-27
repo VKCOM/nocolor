@@ -30,6 +30,10 @@ api2 group:
 message-internals group:
 - "message-internals": "Calling function marked as internal outside of functions with the color message-module"
 - "message-module message-internals": ""
+
+controller group:
+- controller model: restricted dependency
+- controller allow-model-call model: ""
 `
 
 func init() {

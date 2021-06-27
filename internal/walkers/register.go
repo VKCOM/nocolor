@@ -24,7 +24,7 @@ func Register(config *linter.Config, globalCtx *GlobalContext, pal *palette.Pale
 			return checker
 		}
 
-		indexer := NewRootIndexer(globalCtx, ctx)
+		indexer := NewRootIndexer(pal, globalCtx, ctx, colorTag)
 		ctx.State()["lints-root"] = indexer
 		return indexer
 	})

@@ -26,8 +26,7 @@ type RootChecker struct {
 	palette   *palette.Palette
 	globalCtx *GlobalContext
 
-	fileFunction       *symbols.Function
-	currentClassColors palette.ColorContainer
+	fileFunction *symbols.Function
 
 	colorTag string
 }
@@ -67,29 +66,6 @@ func (r *RootChecker) BeforeEnterFile() {
 	r.fileFunction = fun
 }
 
-// BeforeEnterNode
-func (r *RootChecker) BeforeEnterNode(n ir.Node) {
-	switch n := n.(type) {
-	case *ir.ClassStmt:
-		r.setCurrentClassColors(n.ClassName, n.Doc)
-	case *ir.InterfaceStmt:
-		r.setCurrentClassColors(n.InterfaceName, n.Doc)
-	case *ir.TraitStmt:
-		r.setCurrentClassColors(n.TraitName, n.Doc)
-	}
-}
-
-func (r *RootChecker) setCurrentClassColors(name ir.Node, doc phpdoc.Comment) {
-	color, err := r.phpDocToColors(doc)
-	if err != nil {
-		r.ctx.Report(name, linter.LevelError, "errorColor", err.Error())
-		r.currentClassColors = palette.ColorContainer{}
-		return
-	}
-
-	r.currentClassColors = color
-}
-
 // AfterEnterNode
 func (r *RootChecker) AfterEnterNode(n ir.Node) {
 	switch n := n.(type) {
@@ -101,12 +77,27 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 		r.handleStaticCall(n, nil)
 	case *ir.MethodCallExpr:
 		r.handleMethodCall(n, nil, r)
+
+	case *ir.ClassStmt:
+		r.handleClassStmt(n.ClassName, n.Doc)
+	case *ir.InterfaceStmt:
+		r.handleClassStmt(n.InterfaceName, n.Doc)
+	case *ir.TraitStmt:
+		r.handleClassStmt(n.TraitName, n.Doc)
+
 	case *ir.ClassMethodStmt:
 		r.handleClassMethodStmt(n)
 	case *ir.FunctionStmt:
 		r.handleFunctionStmt(n)
 	case *ir.ImportExpr:
 		r.handleImportExpr(n)
+	}
+}
+
+func (r *RootChecker) handleClassStmt(className ir.Node, doc phpdoc.Comment) {
+	errs := r.checkPhpDocColors(doc)
+	for _, err := range errs {
+		r.ctx.Report(className, linter.LevelError, "errorColor", err.Error())
 	}
 }
 
@@ -158,57 +149,20 @@ func (r *RootChecker) getImportAbsPath(path string) (string, bool) {
 }
 
 func (r *RootChecker) handleFunctionStmt(n *ir.FunctionStmt) {
-	colors, err := r.handlePhpDocColors(n.Doc)
-	if err != nil {
+	errs := r.checkPhpDocColors(n.Doc)
+	for _, err := range errs {
 		r.ctx.Report(n.FunctionName, linter.LevelError, "errorColor", err.Error())
-		return
 	}
-
-	funcName, ok := solver.GetFuncName(r.ctx.ClassParseState(), &ir.Name{Value: n.FunctionName.Value})
-	if !ok {
-		return
-	}
-
-	fun, ok := r.globalCtx.Functions.Get(funcName)
-	if !ok {
-		return
-	}
-
-	fun.Colors = colors
 }
 
 func (r *RootChecker) handleClassMethodStmt(n *ir.ClassMethodStmt) {
-	colors, err := r.handlePhpDocColors(n.Doc)
-	if err != nil {
+	errs := r.checkPhpDocColors(n.Doc)
+	for _, err := range errs {
 		r.ctx.Report(n.MethodName, linter.LevelError, "errorColor", err.Error())
 	}
-
-	fun, ok := r.getCurrentFunc()
-	if !ok {
-		return
-	}
-
-	fun.Colors = colors
 }
 
-func (r *RootChecker) handlePhpDocColors(comment phpdoc.Comment) (palette.ColorContainer, error) {
-	colors, err := r.phpDocToColors(comment)
-	if err != nil {
-		return palette.ColorContainer{}, err
-	}
-
-	if r.ctx.ClassParseState().CurrentClass != "" && !r.currentClassColors.Empty() {
-		for _, color := range r.currentClassColors.Colors {
-			colors.Add(color)
-		}
-	}
-
-	return colors, nil
-}
-
-func (r *RootChecker) phpDocToColors(comment phpdoc.Comment) (palette.ColorContainer, error) {
-	var colors palette.ColorContainer
-
+func (r *RootChecker) checkPhpDocColors(comment phpdoc.Comment) (errs []error) {
 	for _, part := range comment.Parsed {
 		p, ok := part.(*phpdoc.RawCommentPart)
 		if !ok {
@@ -220,23 +174,21 @@ func (r *RootChecker) phpDocToColors(comment phpdoc.Comment) (palette.ColorConta
 		}
 
 		if len(p.Params) == 0 {
-			return palette.ColorContainer{}, fmt.Errorf("An empty '@%s' tag value", p.Name())
+			errs = append(errs, fmt.Errorf("An empty '@%s' tag value", p.Name()))
 		}
 
 		colorName := p.Params[0]
 
 		if colorName == "transparent" {
-			return palette.ColorContainer{}, fmt.Errorf("Use of the 'transparent' color does not make sense")
+			errs = append(errs, fmt.Errorf("Use of the 'transparent' color does not make sense"))
 		}
 
 		if !r.palette.ColorExists(colorName) {
-			return palette.ColorContainer{}, fmt.Errorf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName)
+			errs = append(errs, fmt.Errorf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName))
 		}
-
-		colors.Add(r.palette.GetColorByName(colorName))
 	}
 
-	return colors, nil
+	return errs
 }
 
 func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, v ir.Visitor) {
@@ -323,17 +275,39 @@ func (r *RootChecker) handleNew(n *ir.NewExpr) {
 	r.handleMethod("__construct", classType)
 }
 
+func (r *RootChecker) getClassOrTrait(info *meta.Info, typeName string) (meta.ClassInfo, bool) {
+	class, ok := info.GetClass(typeName)
+	if ok {
+		return class, true
+	}
+	trait, ok := info.GetTrait(typeName)
+	if ok {
+		return trait, true
+	}
+	return class, false
+}
+
 func (r *RootChecker) handleMethod(name string, classType types.Map) {
 	var calledMethodInfo solver.FindMethodResult
+	var ok bool
 
 	found := classType.Find(func(typ string) bool {
-		var ok bool
 		calledMethodInfo, ok = solver.FindMethod(r.ctx.ClassParseState().Info, typ, name)
 		return ok
 	})
 
 	if !found {
-		return
+		if name != "__construct" {
+			return
+		}
+
+		// Perhaps this is the case of calling the new operator for a class that
+		// does not have a defined constructor, so we need to create a definition
+		// of a default constructor.
+		calledMethodInfo, ok = r.addedDefaultConstructor(classType)
+		if !ok {
+			return
+		}
 	}
 
 	calledName := calledMethodInfo.Info.Name
@@ -351,6 +325,62 @@ func (r *RootChecker) handleMethod(name string, classType types.Map) {
 
 	curFunc.Called.Add(calledFunc)
 	calledFunc.CalledBy.Add(curFunc)
+}
+
+func (r *RootChecker) addedDefaultConstructor(classType types.Map) (solver.FindMethodResult, bool) {
+	var methodClass *symbols.Class
+	var calledMethodInfo solver.FindMethodResult
+	constructorAdded := false
+
+	classType.Iterate(func(typ string) {
+		if constructorAdded {
+			return
+		}
+
+		class, ok := r.getClassOrTrait(r.ctx.ClassParseState().Info, typ)
+		if !ok {
+			return
+		}
+
+		// We need to create a default constructor definition.
+		funcInfo := meta.FuncInfo{
+			Pos:          meta.ElementPosition{},
+			Name:         "__construct (default autogenerated)",
+			Params:       nil,
+			MinParamsCnt: 0,
+			Typ:          types.Map{},
+			AccessLevel:  0,
+			Flags:        0,
+			ExitFlags:    0,
+			Doc:          meta.PhpDocInfo{},
+		}
+
+		class.Methods.Set("__construct (default autogenerated)", funcInfo)
+
+		calledMethodInfo = solver.FindMethodResult{
+			Info:      funcInfo,
+			ClassName: typ,
+		}
+
+		methodClass, _ = r.globalCtx.Classes.Get(typ)
+
+		constructorAdded = true
+	})
+
+	if !constructorAdded || methodClass == nil {
+		return solver.FindMethodResult{}, false
+	}
+
+	r.globalCtx.Functions.Add(&symbols.Function{
+		Name:     calledMethodInfo.ImplName() + "::__construct (default autogenerated)",
+		Type:     symbols.LocalFunc,
+		Pos:      meta.ElementPosition{},
+		Colors:   methodClass.Colors,
+		Called:   symbols.NewFunctions(),
+		CalledBy: symbols.NewFunctions(),
+	})
+
+	return calledMethodInfo, true
 }
 
 func (r *RootChecker) getCurrentFunc() (*symbols.Function, bool) {
