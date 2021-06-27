@@ -90,6 +90,17 @@ func (masks ColorMasks) Add(color Color) ColorMasks {
 	return masks
 }
 
+func (masks ColorMasks) Remove(color Color) ColorMasks {
+	curLen := len(masks)
+	if color.Index >= curLen {
+		return masks
+	}
+
+	masks[color.Index].Val &^= color.Val
+
+	return masks
+}
+
 func (masks ColorMasks) Contains(color Color) bool {
 	if len(masks) <= color.Index {
 		return false
