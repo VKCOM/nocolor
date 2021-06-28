@@ -6,12 +6,12 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Changed
 
-- [#1]: Fixed function for recalculating masks for colors, which allowed to increase the speed by 2-3%.
+- [#1](https://github.com/VKCOM/nocolor/pull/1): Changed function for recalculating masks for colors, which allowed to increase the speed by 2-3%.
 
 ### Fixed
 
-- [#2] Fixed color mixing for classes and methods;
-- [#3]: Fixed a bug when calling the new operator for a class that does not have an explicit constructor.
+- [#2](https://github.com/VKCOM/nocolor/issues/2): Fixed a bug when calling the new operator for a class that does not have an explicit constructor;
+- [#3](https://github.com/VKCOM/nocolor/issues/3): Fixed color mixing for classes and methods.
 
 ## `1.0.0` 2021-27-06
 
