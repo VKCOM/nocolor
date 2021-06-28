@@ -23,6 +23,8 @@ type Class struct {
 	Type   ClassType
 	Pos    meta.ElementPosition
 	Colors palette.ColorContainer
+
+	WithExplicitConstructor bool
 }
 
 // HumanReadableName returns a string with a name that is understandable.
