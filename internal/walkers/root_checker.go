@@ -77,6 +77,8 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 		r.handleStaticCall(n, nil)
 	case *ir.MethodCallExpr:
 		r.handleMethodCall(n, nil, r)
+	case *ir.CloneExpr:
+		r.handleCloneExpr(n, nil)
 
 	case *ir.ClassStmt:
 		r.handleClassStmt(n.ClassName, n.Doc)
@@ -92,6 +94,38 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 	case *ir.ImportExpr:
 		r.handleImportExpr(n)
 	}
+}
+
+func (r *RootChecker) handleCloneExpr(n *ir.CloneExpr, blockScope *meta.Scope) {
+	var calledMethodInfo solver.FindMethodResult
+	var ok bool
+
+	scope := blockScope
+	if scope == nil {
+		scope = r.ctx.Scope()
+	}
+
+	exprType := solver.ExprType(scope, r.ctx.ClassParseState(), n.Expr)
+	containsCloneMethod := exprType.Find(func(typ string) bool {
+		calledMethodInfo, ok = solver.FindMethod(r.ctx.ClassParseState().Info, typ, "__clone")
+		return ok
+	})
+	if !containsCloneMethod {
+		return
+	}
+
+	calledFunc, ok := r.globalCtx.Functions.Get(calledMethodInfo.ImplName() + "::__clone")
+	if !ok {
+		return
+	}
+
+	curFunc, ok := r.getCurrentFunc()
+	if !ok {
+		return
+	}
+
+	curFunc.Called.Add(calledFunc)
+	calledFunc.CalledBy.Add(curFunc)
 }
 
 func (r *RootChecker) handleClassStmt(className ir.Node, doc phpdoc.Comment) {

@@ -48,5 +48,7 @@ func (b *BlockChecker) BeforeEnterNode(n ir.Node) {
 		b.root.handleMethodCall(n, b.ctx.Scope(), b)
 	case *ir.ImportExpr:
 		b.root.handleImportExpr(n)
+	case *ir.CloneExpr:
+		b.root.handleCloneExpr(n, b.ctx.Scope())
 	}
 }
