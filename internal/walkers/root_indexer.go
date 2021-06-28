@@ -118,6 +118,7 @@ func (r *RootIndexer) BeforeLeaveNode(n ir.Node) {
 				CalledBy: symbols.NewFunctions(),
 			})
 		}
+	default:
 	}
 }
 
