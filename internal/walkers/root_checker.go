@@ -100,7 +100,7 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 }
 
 func (r *RootChecker) handleCloneExpr(n *ir.CloneExpr, blockScope *meta.Scope) {
-	var calledMethodInfo solver.FindMethodResult
+	var methodInfo solver.FindMethodResult
 	var ok bool
 
 	scope := blockScope
@@ -108,21 +108,22 @@ func (r *RootChecker) handleCloneExpr(n *ir.CloneExpr, blockScope *meta.Scope) {
 		scope = r.ctx.Scope()
 	}
 
-	exprType := solver.ExprType(scope, r.ctx.ClassParseState(), n.Expr)
+	exprType := solver.ExprType(scope, r.state, n.Expr)
 	containsCloneMethod := exprType.Find(func(typ string) bool {
-		calledMethodInfo, ok = solver.FindMethod(r.ctx.ClassParseState().Info, typ, "__clone")
+		methodInfo, ok = solver.FindMethod(r.state.Info, typ, "__clone")
 		return ok
 	})
 	if !containsCloneMethod {
 		return
 	}
 
-	calledFunc, ok := r.globalCtx.Functions.Get(calledMethodInfo.ImplName() + "::__clone")
+	cloneMethodName := namegen.Method(methodInfo.ImplName(), "__clone")
+	calledFunc, ok := r.globalCtx.Functions.Get(cloneMethodName)
 	if !ok {
 		return
 	}
 
-	r.createEdgeToCurrent(calledFunc)
+	r.createEdgeWithCurrent(calledFunc)
 }
 
 func (r *RootChecker) handleImportExpr(n *ir.ImportExpr) {
@@ -171,7 +172,7 @@ func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, blockScope *met
 }
 
 func (r *RootChecker) tryAsInvokeMethod(n *ir.FunctionCallExpr, blockScope *meta.Scope) (string, bool) {
-	var calledMethodInfo solver.FindMethodResult
+	var methodInfo solver.FindMethodResult
 	var ok bool
 
 	scope := blockScope
@@ -179,17 +180,17 @@ func (r *RootChecker) tryAsInvokeMethod(n *ir.FunctionCallExpr, blockScope *meta
 		scope = r.ctx.Scope()
 	}
 
-	callerType := solver.ExprType(scope, r.ctx.ClassParseState(), n.Function)
+	callerType := solver.ExprType(scope, r.state, n.Function)
 
 	containsCloneMethod := callerType.Find(func(typ string) bool {
-		calledMethodInfo, ok = solver.FindMethod(r.ctx.ClassParseState().Info, typ, "__invoke")
+		methodInfo, ok = solver.FindMethod(r.state.Info, typ, "__invoke")
 		return ok
 	})
 	if !containsCloneMethod {
 		return "", false
 	}
 
-	return calledMethodInfo.ImplName() + "::__invoke", true
+	return namegen.Method(methodInfo.ImplName(), "__invoke"), true
 }
 
 func (r *RootChecker) handleStaticCall(n *ir.StaticCallExpr, blockScope *meta.Scope) {
