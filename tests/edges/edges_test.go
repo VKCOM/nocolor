@@ -10,10 +10,11 @@ import (
 
 const defaultPalette = `
 red group:
-  - "red green": "red green mixing"
+  - red green: red green mixing
+  - green red: calling red from green is prohibited
 internals group:
-  - "internals": "call internals"
-  - "module internals": ""
+  - internals: call internals
+  - module internals: ""
 `
 
 func init() {
