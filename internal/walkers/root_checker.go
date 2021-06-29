@@ -118,7 +118,7 @@ func (r *RootChecker) handleCloneExpr(n *ir.CloneExpr, blockScope *meta.Scope) {
 		return
 	}
 
-  r.createEdgeToCurrent(calledFunc)
+	r.createEdgeToCurrent(calledFunc)
 }
 
 func (r *RootChecker) handleImportExpr(n *ir.ImportExpr) {
