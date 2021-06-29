@@ -1,7 +1,5 @@
-github.com/VKCOM/noverify v0.3.1-0.20210511165710-0b0f3e32e875 h1:yc2CaSGKBgHTB2s7SZ3dn55gNWUxb+rX0otzresFxOQ=
-github.com/VKCOM/noverify v0.3.1-0.20210511165710-0b0f3e32e875/go.mod h1:g0IgAUfjZ9Z3v+nKj+jRyBnBiWHE3O8f7ZLrRlVHk+k=
-github.com/VKCOM/noverify v0.3.1-0.20210512180712-57472b150ab4 h1:vcev8wcA6d/ZUIbLYoqf+KDVA8WotLe2yE3CZU5gV/k=
-github.com/VKCOM/noverify v0.3.1-0.20210512180712-57472b150ab4/go.mod h1:g0IgAUfjZ9Z3v+nKj+jRyBnBiWHE3O8f7ZLrRlVHk+k=
+github.com/VKCOM/noverify v0.3.1-0.20210629112937-ee659050fbc0 h1:24Sgsj7KSGUA6O8JSDztPNYHtHZfxRrjxKSkKjFNqIg=
+github.com/VKCOM/noverify v0.3.1-0.20210629112937-ee659050fbc0/go.mod h1:g0IgAUfjZ9Z3v+nKj+jRyBnBiWHE3O8f7ZLrRlVHk+k=
 github.com/client9/misspell v0.3.4 h1:ta993UF76GwbvJcIo3Y68y/M3WxlpEHPWIGDkJYwzJI=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=

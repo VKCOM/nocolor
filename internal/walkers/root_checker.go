@@ -7,6 +7,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -75,12 +76,16 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 	switch n := n.(type) {
 	case *ir.NewExpr:
 		r.handleNew(n, nil)
+	case *ir.CloneExpr:
+		r.handleCloneExpr(n, nil)
 	case *ir.FunctionCallExpr:
-		r.handleFunctionCall(n, r)
+		r.handleFunctionCall(n, nil, r)
 	case *ir.StaticCallExpr:
 		r.handleStaticCall(n, nil)
 	case *ir.MethodCallExpr:
 		r.handleMethodCall(n, nil, r)
+	case *ir.PropertyFetchExpr:
+		r.handlePropertyFetch(n, nil, irutil.NodePath{})
 	case *ir.ImportExpr:
 		r.handleImportExpr(n)
 
@@ -95,6 +100,89 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 	case *ir.FunctionStmt:
 		r.checkColorsInDoc(n.FunctionName, n.Doc)
 	}
+}
+
+func (r *RootChecker) handlePropertyFetch(n *ir.PropertyFetchExpr, blockScope *meta.Scope, nodePath irutil.NodePath) {
+	var propInfo solver.FindPropertyResult
+	var propertyName string
+	var ok bool
+
+	switch prop := n.Property.(type) {
+	case *ir.Identifier:
+		propertyName = prop.Value
+	default:
+		return
+	}
+
+	scope := blockScope
+	if scope == nil {
+		scope = r.ctx.Scope()
+	}
+
+	classTypes := solver.ExprType(scope, r.state, n.Variable)
+	classesWithoutProp := make([]string, 0, classTypes.Len())
+
+	classTypes.Iterate(func(classType string) {
+		if !types.IsClass(classType) {
+			return
+		}
+
+		propInfo, ok = solver.FindProperty(r.state.Info, classType, propertyName)
+		if !ok || (ok && propInfo.Info.IsFromAnnotation()) {
+			classesWithoutProp = append(classesWithoutProp, classType)
+		}
+	})
+
+	if len(classesWithoutProp) == 0 {
+		return
+	}
+
+	methodName := "__get"
+	if r.inAssign(nodePath) {
+		methodName = "__set"
+	}
+
+	for _, className := range classesWithoutProp {
+		fqn := namegen.Method(className, methodName)
+
+		calledFunc, ok := r.globalCtx.Functions.Get(fqn)
+		if !ok {
+			return
+		}
+
+		r.createEdgeWithCurrent(calledFunc)
+	}
+}
+
+func (r *RootChecker) handleCloneExpr(n *ir.CloneExpr, blockScope *meta.Scope) {
+	var methodInfo solver.FindMethodResult
+	var ok bool
+
+	scope := blockScope
+	if scope == nil {
+		scope = r.ctx.Scope()
+	}
+
+	exprType := solver.ExprType(scope, r.state, n.Expr)
+	containsCloneMethod := exprType.Find(func(classType string) bool {
+		if !types.IsClass(classType) {
+			return false
+		}
+
+		methodInfo, ok = solver.FindMethod(r.state.Info, classType, "__clone")
+		return ok
+	})
+	if !containsCloneMethod {
+		return
+	}
+
+	cloneMethodName := namegen.Method(methodInfo.ImplName(), "__clone")
+	calledFunc, ok := r.globalCtx.Functions.Get(cloneMethodName)
+	if !ok {
+		return
+	}
+
+	r.createEdgeWithCurrent(calledFunc)
 }
 
 func (r *RootChecker) handleImportExpr(n *ir.ImportExpr) {
@@ -121,14 +209,17 @@ func (r *RootChecker) handleImportExpr(n *ir.ImportExpr) {
 	r.createEdgeWithCurrent(fileFunc)
 }
 
-func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, v ir.Visitor) {
+func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, blockScope *meta.Scope, v ir.Visitor) {
 	for _, arg := range n.Args {
 		arg.Walk(v)
 	}
 
 	fqName, ok := solver.GetFuncName(r.state, n.Function)
 	if !ok {
-		return
+		fqName, ok = r.tryAsInvokeMethod(n, blockScope)
+		if !ok {
+			return
+		}
 	}
 
 	calledFunc, ok := r.globalCtx.Functions.Get(fqName)
@@ -137,6 +228,32 @@ func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, v ir.Visitor) {
 	}
 
 	r.createEdgeWithCurrent(calledFunc)
+}
+
+func (r *RootChecker) tryAsInvokeMethod(n *ir.FunctionCallExpr, blockScope *meta.Scope) (string, bool) {
+	var methodInfo solver.FindMethodResult
+	var ok bool
+
+	scope := blockScope
+	if scope == nil {
+		scope = r.ctx.Scope()
+	}
+
+	callerType := solver.ExprType(scope, r.state, n.Function)
+
+	containsCloneMethod := callerType.Find(func(classType string) bool {
+		if !types.IsClass(classType) {
+			return false
+		}
+
+		methodInfo, ok = solver.FindMethod(r.state.Info, classType, "__invoke")
+		return ok
+	})
+	if !containsCloneMethod {
+		return "", false
+	}
+
+	return namegen.Method(methodInfo.ImplName(), "__invoke"), true
 }
 
 func (r *RootChecker) handleStaticCall(n *ir.StaticCallExpr, blockScope *meta.Scope) {
@@ -164,7 +281,7 @@ func (r *RootChecker) handleStaticCall(n *ir.StaticCallExpr, blockScope *meta.Sc
 		classType = types.NewMap(className)
 	}
 
-	r.handleMethod(methodName, classType)
+	r.handleMethod(methodName, classType, true)
 }
 
 func (r *RootChecker) handleMethodCall(n *ir.MethodCallExpr, blockScope *meta.Scope, v ir.Visitor) {
@@ -181,7 +298,7 @@ func (r *RootChecker) handleMethodCall(n *ir.MethodCallExpr, blockScope *meta.Sc
 
 	classType := solver.ExprType(scope, r.state, n.Variable)
 
-	r.handleMethod(methodName, classType)
+	r.handleMethod(methodName, classType, false)
 
 	for _, nn := range n.Args {
 		nn.Walk(v)
@@ -206,7 +323,7 @@ func (r *RootChecker) handleNew(n *ir.NewExpr, blockScope *meta.Scope) {
 				return
 			}
 
-			r.handleMethod("__construct", types.NewMap(classType))
+			r.handleMethod("__construct", types.NewMap(classType), false)
 		})
 
 		return
@@ -214,15 +331,21 @@ func (r *RootChecker) handleNew(n *ir.NewExpr, blockScope *meta.Scope) {
 
 	classType := types.NewMap(className)
 
-	r.handleMethod("__construct", classType)
+	r.handleMethod("__construct", classType, false)
 }
 
-func (r *RootChecker) handleMethod(name string, classTypes types.Map) {
+func (r *RootChecker) handleMethod(name string, classTypes types.Map, static bool) {
 	var methodInfo solver.FindMethodResult
 	var implicitConstructor *symbols.Function
 	var ok bool
 
+	r.handleUndefinedMethodCase(name, classTypes, static)
+
 	found := classTypes.Find(func(classType string) bool {
+		if !types.IsClass(classType) {
+			return false
+		}
+
 		methodInfo, ok = solver.FindMethod(r.state.Info, classType, name)
 
 		if !ok && name == "__construct" {
@@ -253,6 +376,40 @@ func (r *RootChecker) handleMethod(name string, classTypes types.Map) {
 	}
 
 	r.createEdgeWithCurrent(calledFunc)
+}
+
+func (r *RootChecker) handleUndefinedMethodCase(name string, classTypes types.Map, static bool) {
+	classesWithoutMethod := make([]string, 0, classTypes.Len())
+
+	classTypes.Iterate(func(classType string) {
+		if !types.IsClass(classType) {
+			return
+		}
+
+		methodInfo, ok := solver.FindMethod(r.state.Info, classType, name)
+		if !ok || (ok && methodInfo.Info.IsFromAnnotation()) {
+			// If the method is described in the annotation for the class,
+			// then it will be found, but in fact it does not exist and must
+			// be redirected to the call to __call or __callStatic.
+			classesWithoutMethod = append(classesWithoutMethod, classType)
+		}
+	})
+
+	methodName := "__call"
+	if static {
+		methodName = "__callStatic"
+	}
+
+	for _, className := range classesWithoutMethod {
+		fqn := namegen.Method(className, methodName)
+
+		calledFunc, ok := r.globalCtx.Functions.Get(fqn)
+		if !ok {
+			continue
+		}
+
+		r.createEdgeWithCurrent(calledFunc)
+	}
 }
 
 func (r *RootChecker) checkColorsInDoc(name ir.Node, doc phpdoc.Comment) {
@@ -354,4 +511,13 @@ func (r *RootChecker) createEdgeWithCurrent(calledFunc *symbols.Function) {
 
 	curFunc.Called.Add(calledFunc)
 	calledFunc.CalledBy.Add(curFunc)
+}
+
+func (r *RootChecker) inAssign(nodePath irutil.NodePath) bool {
+	for i := 0; nodePath.NthParent(i) != nil; i++ {
+		if irutil.IsAssign(nodePath.NthParent(i)) {
+			return true
+		}
+	}
+	return false
 }
