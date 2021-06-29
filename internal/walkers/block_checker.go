@@ -28,15 +28,15 @@ func NewBlockChecker(ctx *linter.BlockContext, root *RootChecker) *BlockChecker 
 
 // EnterNode is method to use BlockChecker in the Walk method of AST nodes.
 func (b *BlockChecker) EnterNode(n ir.Node) bool {
-	b.BeforeEnterNode(n)
+	b.AfterEnterNode(n)
 	return true
 }
 
 // LeaveNode is method to use BlockChecker in the Walk method of AST nodes.
 func (b *BlockChecker) LeaveNode(n ir.Node) {}
 
-// BeforeEnterNode is the main method for processing AST nodes.
-func (b *BlockChecker) BeforeEnterNode(n ir.Node) {
+// AfterEnterNode is the main method for processing AST nodes.
+func (b *BlockChecker) AfterEnterNode(n ir.Node) {
 	switch n := n.(type) {
 	case *ir.NewExpr:
 		b.root.handleNew(n)
@@ -50,5 +50,13 @@ func (b *BlockChecker) BeforeEnterNode(n ir.Node) {
 		b.root.handleImportExpr(n)
 	case *ir.CloneExpr:
 		b.root.handleCloneExpr(n, b.ctx.Scope())
+	case *ir.PropertyFetchExpr:
+		b.root.handlePropertyFetch(n, b.ctx.Scope(), b.ctx.NodePath())
+
+	case *ir.Assign:
+		// Because of the way we handle assignments,
+		// we have to redirect our walker explicitly.
+		n.Variable.Walk(b)
+		n.Expr.Walk(b)
 	}
 }

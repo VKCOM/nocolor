@@ -258,3 +258,330 @@ f@green -> Foo::__callStatic@red
 
 	suite.RunAndMatch()
 }
+
+func TestCallStaticMagicMethodWithSeveralClasses(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+/**
+ * @method static int undef()
+ */
+class Foo {
+  /**
+   * @color red
+   */
+  public static function __callStatic(string $name, $args) {}
+}
+
+class Zoo {
+  /**
+   * @color red
+   */
+  public static function __callStatic(string $name, $args) {}
+}
+
+class Goo {
+  public static function undef() {}
+}
+
+/**
+ * @color green
+ * @param Foo|Goo|Zoo|int $inst
+ */
+function f($inst) {
+  $inst::undef();
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__callStatic@red
+`,
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Zoo::__callStatic@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestCallMagicMethodWithSeveralClasses(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+/**
+ * @method int undef()
+ */
+class Foo {
+  /**
+   * @color red
+   */
+  public function __call(string $name, $args) {}
+}
+
+class Zoo {
+  /**
+   * @color red
+   */
+  public function __call(string $name, $args) {}
+}
+
+class Goo {
+  public function undef() {}
+}
+
+/**
+ * @color green
+ * @param Foo|Goo|Zoo|int $inst
+ */
+function f($inst) {
+  $inst->undef();
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__call@red
+`,
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Zoo::__call@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestGetMagicMethod(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+class Foo {
+  /**
+   * @color red
+   */
+  public function __get(string $name) { return 0; }
+}
+
+/**
+ * @color green
+ */
+function f() {
+  $obj = new Foo;
+  echo $obj->undef;
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__get@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestGetMagicMethodWithAnnotations(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+/**
+ * @property int $undef
+ */
+class Foo {
+  /**
+   * @color red
+   */
+  public function __get(string $name) { return 0; }
+}
+
+/**
+ * @color green
+ */
+function f() {
+  $obj = new Foo;
+  echo $obj->undef;
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__get@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestSetMagicMethod(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+class Foo {
+  /**
+   * @color red
+   */
+  public function __set(string $name, $value) {}
+}
+
+/**
+ * @color green
+ */
+function f() {
+  $obj = new Foo;
+  $obj->undef = 100;
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__set@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestSetMagicMethodWithAnnotations(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+/**
+ * @property int $undef
+ */
+class Foo {
+  /**
+   * @color red
+   */
+  public function __set(string $name, $value) {}
+}
+
+/**
+ * @color green
+ */
+function f() {
+  $obj = new Foo;
+  $obj->undef = 100;
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__set@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestSetMagicMethodWithAnnotationsWithPlusAssign(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+/**
+ * @property int $undef
+ */
+class Foo {
+  /**
+   * @color red
+   */
+  public function __set(string $name, $value) {}
+}
+
+/**
+ * @color green
+ */
+function f() {
+  $obj = new Foo;
+  $obj->undef += 100;
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__set@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestSetMagicMethodWithSeveralClasses(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+/**
+ * @property int $undef
+ */
+class Foo {
+  /**
+   * @color red
+   */
+  public function __set(string $name, $value) {}
+}
+
+class Zoo {
+  /**
+   * @color red
+   */
+  public function __set(string $name, $value) {}
+}
+
+class Goo {
+  public int $undef = 10;
+
+  /**
+   * @color red
+   */
+  public function __set(string $name, $value) {}
+}
+
+/**
+ * @color green
+ * @param Foo|Goo|Zoo|int $inst
+ */
+function f($inst) {
+  $inst->undef += 100;
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__set@red
+`,
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Zoo::__set@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
