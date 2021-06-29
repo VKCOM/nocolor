@@ -74,7 +74,7 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 	case *ir.CloneExpr:
 		r.handleCloneExpr(n, nil)
 	case *ir.FunctionCallExpr:
-		r.handleFunctionCall(n, r)
+		r.handleFunctionCall(n, nil, r)
 	case *ir.StaticCallExpr:
 		r.handleStaticCall(n, nil)
 	case *ir.MethodCallExpr:
@@ -145,14 +145,17 @@ func (r *RootChecker) handleImportExpr(n *ir.ImportExpr) {
 	r.createEdgeToCurrent(fileFunc)
 }
 
-func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, v ir.Visitor) {
+func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, blockScope *meta.Scope, v ir.Visitor) {
 	for _, arg := range n.Args {
 		arg.Walk(v)
 	}
 
 	fqName, ok := solver.GetFuncName(r.ctx.ClassParseState(), n.Function)
 	if !ok {
-		return
+		fqName, ok = r.tryAsInvokeMethod(n, blockScope)
+		if !ok {
+			return
+		}
 	}
 
 	calledFunc, ok := r.globalCtx.Functions.Get(fqName)
@@ -161,6 +164,28 @@ func (r *RootChecker) handleFunctionCall(n *ir.FunctionCallExpr, v ir.Visitor) {
 	}
 
 	r.createEdgeToCurrent(calledFunc)
+}
+
+func (r *RootChecker) tryAsInvokeMethod(n *ir.FunctionCallExpr, blockScope *meta.Scope) (string, bool) {
+	var calledMethodInfo solver.FindMethodResult
+	var ok bool
+
+	scope := blockScope
+	if scope == nil {
+		scope = r.ctx.Scope()
+	}
+
+	callerType := solver.ExprType(scope, r.ctx.ClassParseState(), n.Function)
+
+	containsCloneMethod := callerType.Find(func(typ string) bool {
+		calledMethodInfo, ok = solver.FindMethod(r.ctx.ClassParseState().Info, typ, "__invoke")
+		return ok
+	})
+	if !containsCloneMethod {
+		return "", false
+	}
+
+	return calledMethodInfo.ImplName() + "::__invoke", true
 }
 
 func (r *RootChecker) handleStaticCall(n *ir.StaticCallExpr, blockScope *meta.Scope) {

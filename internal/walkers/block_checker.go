@@ -41,7 +41,7 @@ func (b *BlockChecker) BeforeEnterNode(n ir.Node) {
 	case *ir.NewExpr:
 		b.root.handleNew(n)
 	case *ir.FunctionCallExpr:
-		b.root.handleFunctionCall(n, b)
+		b.root.handleFunctionCall(n, b.ctx.Scope(), b)
 	case *ir.StaticCallExpr:
 		b.root.handleStaticCall(n, b.ctx.Scope())
 	case *ir.MethodCallExpr:
