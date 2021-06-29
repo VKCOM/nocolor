@@ -86,7 +86,6 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 		r.handleMethodCall(n, nil, r)
 	case *ir.PropertyFetchExpr:
 		r.handlePropertyFetch(n, nil, irutil.NodePath{})
-
 	case *ir.ImportExpr:
 		r.handleImportExpr(n)
 
@@ -165,8 +164,12 @@ func (r *RootChecker) handleCloneExpr(n *ir.CloneExpr, blockScope *meta.Scope) {
 	}
 
 	exprType := solver.ExprType(scope, r.state, n.Expr)
-	containsCloneMethod := exprType.Find(func(typ string) bool {
-		methodInfo, ok = solver.FindMethod(r.state.Info, typ, "__clone")
+	containsCloneMethod := exprType.Find(func(classType string) bool {
+		if !types.IsClass(classType) {
+			return false
+		}
+
+		methodInfo, ok = solver.FindMethod(r.state.Info, classType, "__clone")
 		return ok
 	})
 	if !containsCloneMethod {
@@ -238,8 +241,12 @@ func (r *RootChecker) tryAsInvokeMethod(n *ir.FunctionCallExpr, blockScope *meta
 
 	callerType := solver.ExprType(scope, r.state, n.Function)
 
-	containsCloneMethod := callerType.Find(func(typ string) bool {
-		methodInfo, ok = solver.FindMethod(r.state.Info, typ, "__invoke")
+	containsCloneMethod := callerType.Find(func(classType string) bool {
+		if !types.IsClass(classType) {
+			return false
+		}
+
+		methodInfo, ok = solver.FindMethod(r.state.Info, classType, "__invoke")
 		return ok
 	})
 	if !containsCloneMethod {
