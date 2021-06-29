@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,10 +24,11 @@ var (
 )
 
 func printVersion(mainConfig *cmd.MainConfig) {
+	fmt.Print("NoColor, ")
 	if BuildCommit == "" {
-		log.Printf("Version %s: built without version info", mainConfig.LinterVersion)
+		fmt.Printf("version %s: built without version info", mainConfig.LinterVersion)
 	} else {
-		log.Printf("Version %s: built on: %s OS: %s Commit: %s\n", mainConfig.LinterVersion, BuildTime, BuildOSUname, BuildCommit)
+		fmt.Printf("version %s: built on: %s OS: %s Commit: %s\n", mainConfig.LinterVersion, BuildTime, BuildOSUname, BuildCommit)
 	}
 }
 
