@@ -106,3 +106,155 @@ g@green -> Foo::__invoke@red
 
 	suite.RunAndMatch()
 }
+
+func TestCallMagicMethod(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+class Foo {
+  /**
+   * @color red
+   */
+  public function __call() {}
+
+  /**
+   * @color red
+   */
+  public function __callStatic() {}
+}
+
+/**
+ * @color green
+ */
+function f() {
+  $obj = new Foo;
+  echo $obj->undef();
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__call@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestCallMagicMethodWithAnnotation(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+/**
+ * @method int undef()
+ */
+class Foo {
+  /**
+   * @color red
+   */
+  public function __call() {}
+
+  /**
+   * @color red
+   */
+  public function __callStatic() {}
+}
+
+/**
+ * @color green
+ */
+function f() {
+  $obj = new Foo;
+  echo $obj->undef();
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__call@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestCallStaticMagicMethod(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+class Foo {
+  /**
+   * @color red
+   */
+  public function __call() {}
+
+  /**
+   * @color red
+   */
+  public function __callStatic() {}
+}
+
+/**
+ * @color green
+ */
+function f() {
+  echo Foo::undef();
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__callStatic@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestCallStaticMagicMethodWithAnnotation(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+/**
+ * @method static int undef()
+ */
+class Foo {
+  /**
+   * @color red
+   */
+  public function __call() {}
+
+  /**
+   * @color red
+   */
+  public function __callStatic() {}
+}
+
+/**
+ * @color green
+ */
+function f() {
+  echo Foo::undef();
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__callStatic@red
+`,
+	}
+
+	suite.RunAndMatch()
+}

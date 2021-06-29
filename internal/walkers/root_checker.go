@@ -218,7 +218,7 @@ func (r *RootChecker) handleStaticCall(n *ir.StaticCallExpr, blockScope *meta.Sc
 		classType = types.NewMap(className)
 	}
 
-	r.handleMethod(methodName, classType)
+	r.handleMethod(methodName, classType, true)
 }
 
 func (r *RootChecker) handleMethodCall(n *ir.MethodCallExpr, blockScope *meta.Scope, v ir.Visitor) {
@@ -235,7 +235,7 @@ func (r *RootChecker) handleMethodCall(n *ir.MethodCallExpr, blockScope *meta.Sc
 
 	classType := solver.ExprType(scope, r.state, n.Variable)
 
-	r.handleMethod(methodName, classType)
+	r.handleMethod(methodName, classType, false)
 
 	for _, nn := range n.Args {
 		nn.Walk(v)
@@ -250,10 +250,10 @@ func (r *RootChecker) handleNew(n *ir.NewExpr) {
 
 	classType := types.NewMap(className)
 
-	r.handleMethod("__construct", classType)
+	r.handleMethod("__construct", classType, false)
 }
 
-func (r *RootChecker) handleMethod(name string, classTypes types.Map) {
+func (r *RootChecker) handleMethod(name string, classTypes types.Map, static bool) {
 	var methodInfo solver.FindMethodResult
 	var implicitConstructor *symbols.Function
 	var ok bool
@@ -265,6 +265,23 @@ func (r *RootChecker) handleMethod(name string, classTypes types.Map) {
 			constructorName := namegen.DefaultConstructor(classType)
 			implicitConstructor, ok = r.globalCtx.Functions.Get(constructorName)
 			return ok
+		}
+
+		// If the method is described in the annotation for the class,
+		// then it will be found, but in fact it does not exist and must
+		// be redirected to the call to __call or __callStatic.
+		if !ok || methodInfo.Info.IsFromAnnotation() {
+			callName := "__call"
+			if static {
+				callName = "__callStatic"
+			}
+			callMethodInfo, ok := solver.FindMethod(r.state.Info, classType, callName)
+			if !ok {
+				return ok
+			}
+
+			methodInfo = callMethodInfo
+			return true
 		}
 
 		return ok
