@@ -75,7 +75,7 @@ func (r *RootChecker) BeforeEnterFile() {
 func (r *RootChecker) AfterEnterNode(n ir.Node) {
 	switch n := n.(type) {
 	case *ir.NewExpr:
-		r.handleNew(n)
+		r.handleNew(n, nil)
 	case *ir.CloneExpr:
 		r.handleCloneExpr(n, nil)
 	case *ir.FunctionCallExpr:
@@ -305,9 +305,27 @@ func (r *RootChecker) handleMethodCall(n *ir.MethodCallExpr, blockScope *meta.Sc
 	}
 }
 
-func (r *RootChecker) handleNew(n *ir.NewExpr) {
+func (r *RootChecker) handleNew(n *ir.NewExpr, blockScope *meta.Scope) {
 	className, ok := solver.GetClassName(r.state, n.Class)
 	if !ok {
+		// If we cannot get the name, then we will try to find the
+		// type of the expression, and if it is a class, then we
+		// will assume that the constructor of this class is called.
+
+		scope := blockScope
+		if scope == nil {
+			scope = r.ctx.Scope()
+		}
+
+		typ := solver.ExprType(scope, r.state, n.Class)
+		typ.Iterate(func(classType string) {
+			if !types.IsClass(classType) {
+				return
+			}
+
+			r.handleMethod("__construct", types.NewMap(classType))
+		})
+
 		return
 	}
 

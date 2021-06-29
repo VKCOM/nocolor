@@ -39,7 +39,7 @@ func (b *BlockChecker) LeaveNode(n ir.Node) {}
 func (b *BlockChecker) AfterEnterNode(n ir.Node) {
 	switch n := n.(type) {
 	case *ir.NewExpr:
-		b.root.handleNew(n)
+		b.root.handleNew(n, b.ctx.Scope())
 	case *ir.FunctionCallExpr:
 		b.root.handleFunctionCall(n, b.ctx.Scope(), b)
 	case *ir.StaticCallExpr:
