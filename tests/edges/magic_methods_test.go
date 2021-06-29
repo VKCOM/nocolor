@@ -393,6 +393,44 @@ f@green -> Foo::__get@red
 	suite.RunAndMatch()
 }
 
+func TestGetWithDepth2MagicMethod(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+class Foo {
+  public function __get(string $name) {
+    return $this->f();
+  }
+
+  /**
+   * @color red
+   */
+  private function f(): int {
+    return 0;
+  }
+}
+
+/**
+ * @color green
+ */
+function f() {
+  $obj = new Foo;
+  echo $obj->undef;
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__get -> Foo::f@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
 func TestGetMagicMethodWithAnnotations(t *testing.T) {
 	suite := linttest.NewSuite(t)
 

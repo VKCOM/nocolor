@@ -323,7 +323,7 @@ func (r *RootChecker) handleNew(n *ir.NewExpr, blockScope *meta.Scope) {
 				return
 			}
 
-			r.handleMethod("__construct", types.NewMap(classType))
+			r.handleMethod("__construct", types.NewMap(classType), false)
 		})
 
 		return
