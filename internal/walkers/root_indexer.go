@@ -101,7 +101,7 @@ func (r *RootIndexer) phpDocToColors(comment phpdoc.Comment) palette.ColorContai
 func (r *RootIndexer) BeforeLeaveNode(n ir.Node) {
 	switch n := n.(type) {
 	case *ir.ClassStmt:
-		name := r.ctx.ClassParseState().Namespace + "\\" + n.ClassName.Value
+		name := r.ctx.ClassParseState().Namespace + `\` + n.ClassName.Value
 
 		class, ok := r.meta.Classes.Get(name)
 		if !ok {
@@ -131,7 +131,7 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 
 	switch n := n.(type) {
 	case *ir.ClassStmt:
-		name := r.ctx.ClassParseState().Namespace + "\\" + n.ClassName.Value
+		name := r.ctx.ClassParseState().Namespace + `\` + n.ClassName.Value
 
 		r.meta.Classes.Add(&symbols.Class{
 			Name:   name,
@@ -141,7 +141,7 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 		})
 
 	case *ir.InterfaceStmt:
-		name := r.ctx.ClassParseState().Namespace + "\\" + n.InterfaceName.Value
+		name := r.ctx.ClassParseState().Namespace + `\` + n.InterfaceName.Value
 
 		r.meta.Classes.Add(&symbols.Class{
 			Name:   name,
@@ -151,7 +151,7 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 		})
 
 	case *ir.TraitStmt:
-		name := r.ctx.ClassParseState().Namespace + "\\" + n.TraitName.Value
+		name := r.ctx.ClassParseState().Namespace + `\` + n.TraitName.Value
 
 		r.meta.Classes.Add(&symbols.Class{
 			Name:   name,
