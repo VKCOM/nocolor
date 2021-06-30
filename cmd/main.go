@@ -84,6 +84,14 @@ func Main() {
 			})
 
 			app.Commands = append(app.Commands, &cmd.Command{
+				Name:        "cache-clear",
+				Description: "The command clears the cache",
+				Action: func(ctx *cmd.AppContext) (int, error) {
+					return CacheClear()
+				},
+			})
+
+			app.Commands = append(app.Commands, &cmd.Command{
 				Name:        "init",
 				Description: "The command to create a template palette in the project folder",
 				Action: func(ctx *cmd.AppContext) (int, error) {
