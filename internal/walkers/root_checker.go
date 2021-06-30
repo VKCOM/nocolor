@@ -331,51 +331,7 @@ func (r *RootChecker) handleNew(n *ir.NewExpr, blockScope *meta.Scope) {
 	r.handleMethod("__construct", classType, false)
 }
 
-func (r *RootChecker) handleMethod(name string, classTypes types.Map, static bool) {
-	var methodInfo solver.FindMethodResult
-	var implicitConstructor *symbols.Function
-	var ok bool
-
-	r.handleUndefinedMethodCase(name, classTypes, static)
-
-	found := classTypes.Find(func(classType string) bool {
-		if !types.IsClass(classType) {
-			return false
-		}
-
-		methodInfo, ok = solver.FindMethod(r.state.Info, classType, name)
-
-		if !ok && name == "__construct" {
-			constructorName := namegen.DefaultConstructor(classType)
-			implicitConstructor, ok = r.globalCtx.Functions.Get(constructorName)
-			return ok
-		}
-
-		return ok
-	})
-
-	if !found && implicitConstructor == nil {
-		return
-	}
-
-	methodName := methodInfo.Info.Name
-	methodClassName := methodInfo.ImplName()
-	fqn := namegen.Method(methodClassName, methodName)
-
-	var calledFunc *symbols.Function
-	if implicitConstructor != nil {
-		calledFunc = implicitConstructor
-	} else {
-		calledFunc, ok = r.globalCtx.Functions.Get(fqn)
-		if !ok {
-			return
-		}
-	}
-
-	r.createEdgeWithCurrent(calledFunc)
-}
-
-func (r *RootChecker) handleUndefinedMethodCase(name string, classTypes types.Map, static bool) {
+func (r *RootChecker) handleMethod(methodName string, classTypes types.Map, static bool) {
 	classesWithoutMethod := make([]string, 0, classTypes.Len())
 
 	classTypes.Iterate(func(classType string) {
@@ -383,22 +339,38 @@ func (r *RootChecker) handleUndefinedMethodCase(name string, classTypes types.Ma
 			return
 		}
 
-		methodInfo, ok := solver.FindMethod(r.state.Info, classType, name)
+		methodInfo, ok := solver.FindMethod(r.state.Info, classType, methodName)
 		if !ok || (ok && methodInfo.Info.IsFromAnnotation()) {
 			// If the method is described in the annotation for the class,
 			// then it will be found, but in fact it does not exist and must
 			// be redirected to the call to __call or __callStatic.
 			classesWithoutMethod = append(classesWithoutMethod, classType)
 		}
+
+		methodFQN := namegen.Method(methodInfo.ImplName(), methodName)
+		if !ok && methodName == "__construct" {
+			methodFQN = namegen.DefaultConstructor(classType)
+		}
+
+		calledFunc, ok := r.globalCtx.Functions.Get(methodFQN)
+		if !ok {
+			return
+		}
+
+		r.createEdgeWithCurrent(calledFunc)
 	})
 
-	methodName := "__call"
+	r.handleClassWithoutMethod(static, classesWithoutMethod)
+}
+
+func (r *RootChecker) handleClassWithoutMethod(static bool, classesWithoutMethod []string) {
+	magicMethodName := "__call"
 	if static {
-		methodName = "__callStatic"
+		magicMethodName = "__callStatic"
 	}
 
 	for _, className := range classesWithoutMethod {
-		fqn := namegen.Method(className, methodName)
+		fqn := namegen.Method(className, magicMethodName)
 
 		calledFunc, ok := r.globalCtx.Functions.Get(fqn)
 		if !ok {
