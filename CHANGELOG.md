@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## `1.0.2` 2021-30-06
+
+### Added
+
+- [#8](https://github.com/VKCOM/nocolor/pull/11): Added support for the following magic methods:
+  - `__clone`
+  - `__invoke`
+  - `__call`
+  - `__callStatic`
+  - `__get`
+  - `__set`
+
+
+### Changed
+
+- [#11](https://github.com/VKCOM/nocolor/pull/11): Changed behavior, if the new operator is called with a variable that has a class type, then we assume that the constructor of this class is called;
+
+- [#12](https://github.com/VKCOM/nocolor/pull/12): Changed behavior, if a method is called from a variable with several possible classes, then a connection will be created with the methods of all classes;
+
+- [`3bf46`](https://github.com/VKCOM/nocolor/commit/3bf46ab1fcd773fc780873fa8dc6a9cdc0d7a937): Improved the output for the `version` command.
+
 ## `1.0.1` 2021-28-06
 
 ### Changed
