@@ -381,40 +381,6 @@ func (r *RootChecker) handleClassWithoutMethod(static bool, classesWithoutMethod
 	}
 }
 
-func (r *RootChecker) handleUndefinedMethodCase(name string, classTypes types.Map, static bool) {
-	classesWithoutMethod := make([]string, 0, classTypes.Len())
-
-	classTypes.Iterate(func(classType string) {
-		if !types.IsClass(classType) {
-			return
-		}
-
-		methodInfo, ok := solver.FindMethod(r.state.Info, classType, name)
-		if !ok || (ok && methodInfo.Info.IsFromAnnotation()) {
-			// If the method is described in the annotation for the class,
-			// then it will be found, but in fact it does not exist and must
-			// be redirected to the call to __call or __callStatic.
-			classesWithoutMethod = append(classesWithoutMethod, classType)
-		}
-	})
-
-	methodName := "__call"
-	if static {
-		methodName = "__callStatic"
-	}
-
-	for _, className := range classesWithoutMethod {
-		fqn := namegen.Method(className, methodName)
-
-		calledFunc, ok := r.globalCtx.Functions.Get(fqn)
-		if !ok {
-			continue
-		}
-
-		r.createEdgeWithCurrent(calledFunc)
-	}
-}
-
 func (r *RootChecker) checkColorsInDoc(name ir.Node, doc phpdoc.Comment) {
 	errs := r.getPhpDocColorErrors(doc)
 	for _, err := range errs {
