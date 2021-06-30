@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## `1.0.3` 2021-01-07
+
+### Added
+
+- [#14](https://github.com/VKCOM/nocolor/pull/14): Added `cache-clear` command.
+
+### Fixed
+
+- [`1a7ac`](https://github.com/VKCOM/nocolor/commit/1a7ac0f04f1abd89b272e2222a155af485f24524): Fixed panic if no arguments or commands were passed.
+
 ## `1.0.2` 2021-30-06
 
 ### Added
