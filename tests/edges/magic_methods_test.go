@@ -55,6 +55,52 @@ f@green -> FooCloneable::__clone@red
 	suite.RunAndMatch()
 }
 
+func TestCloneMagicMethodWithSeveralClasses(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+class Foo {
+  /**
+   * @color red
+   */
+  public function __clone() {}
+}
+
+class Zoo {}
+
+class Goo {
+  /**
+   * @color red
+   */
+  public function __clone() {}
+}
+
+/**
+ * @color green
+ * @param Foo|Goo|Zoo|int $inst
+ */
+function f($inst) {
+  $a = clone $inst;
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__clone@red
+`,
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Goo::__clone@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
 func TestInvokeMagicMethod(t *testing.T) {
 	suite := linttest.NewSuite(t)
 
@@ -101,6 +147,53 @@ f@green -> Foo::__invoke@red
 green red => calling red from green is prohibited
   This color rule is broken, call chain:
 g@green -> Foo::__invoke@red
+`,
+	}
+
+	suite.RunAndMatch()
+}
+
+func TestInvokeMagicMethodWithSeveralClasses(t *testing.T) {
+	suite := linttest.NewSuite(t)
+
+	suite.Palette = defaultPalette
+	suite.AddFile(`<?php
+class Foo {
+  /**
+   * @color red
+   */
+  public function __invoke() {}
+}
+
+class Zoo {}
+
+class Goo {
+  /**
+   * @color red
+   */
+  public function __invoke() {}
+}
+
+/**
+ * @color green
+ * @param Foo|Goo|Zoo|int $inst
+ */
+function f($inst) {
+  $inst();
+}
+`)
+
+	suite.Expect = []string{
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Foo::__invoke@red
+`,
+
+		`
+green red => calling red from green is prohibited
+  This color rule is broken, call chain:
+f@green -> Goo::__invoke@red
 `,
 	}
 
