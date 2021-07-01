@@ -16,6 +16,11 @@ All notable changes to this project will be documented in this file, in reverse 
 
 - [#17](https://github.com/VKCOM/nocolor/pull/17): Fixed inconsistency in commands description.
 
+### Changed
+
+- [#18](https://github.com/VKCOM/nocolor/pull/18): Collecting colors has been moved from the indexing stage to the call graph creation stage.
+
+
 ## `1.0.3` 2021-01-07
 
 ### Added
