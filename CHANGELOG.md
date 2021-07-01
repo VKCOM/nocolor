@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## `1.0.4` 2021-01-07
+
+> If you used version **1.0.3** and below, then remove the current cache with the `cache-clear` command.
+
+### Added
+
+- [#16](https://github.com/VKCOM/nocolor/pull/16): Added a message about the successful deletion of the cache for `cache-clear` command, and now, in case of a strange path, a message is displayed without panic.
+
+### Fixed
+
+- [#15](https://github.com/VKCOM/nocolor/pull/15): Fixed a bug due to which the wrong colors could be set for functions on subsequent launches;
+
+- [#17](https://github.com/VKCOM/nocolor/pull/17): Fixed inconsistency in commands description.
+
 ## `1.0.3` 2021-01-07
 
 ### Added
