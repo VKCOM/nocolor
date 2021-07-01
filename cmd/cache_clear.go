@@ -1,15 +1,18 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/i582/cfmt/cmd/cfmt"
 )
 
 func CacheClear() (int, error) {
 	cacheDir := DefaultCacheDir()
 	if cacheDir == "/" || cacheDir == "" {
-		panic(fmt.Sprintf("attempted to rm -rf %s", cacheDir))
+		cfmt.Printf("Cache clearing error: attempted to {{rm -rf %s}}::red", cacheDir)
+		return 2, nil
 	}
 	err := os.RemoveAll(cacheDir)
+	cfmt.Println("The cache has been {{successfully}}::green deleted.")
 	return 0, err
 }
