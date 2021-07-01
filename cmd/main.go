@@ -76,7 +76,7 @@ func Main() {
 
 			app.Commands = append(app.Commands, &cmd.Command{
 				Name:        "version",
-				Description: "The command outputs the version",
+				Description: "The command to output the tool version",
 				Action: func(ctx *cmd.AppContext) (int, error) {
 					printVersion(ctx.MainConfig)
 					return 0, nil
@@ -85,7 +85,7 @@ func Main() {
 
 			app.Commands = append(app.Commands, &cmd.Command{
 				Name:        "cache-clear",
-				Description: "The command clears the cache",
+				Description: "The command to clear the cache",
 				Action: func(ctx *cmd.AppContext) (int, error) {
 					return CacheClear()
 				},
