@@ -22,7 +22,7 @@ type Class struct {
 	Name   string
 	Type   ClassType
 	Pos    meta.ElementPosition
-	Colors palette.ColorContainer
+	Colors *palette.ColorContainer
 
 	WithExplicitConstructor bool
 }

@@ -25,7 +25,7 @@ type Function struct {
 	Name   string
 	Type   FunctionType
 	Pos    meta.ElementPosition
-	Colors palette.ColorContainer
+	Colors *palette.ColorContainer
 
 	Called   *Functions
 	CalledBy *Functions

@@ -62,6 +62,7 @@ func (r *RootChecker) BeforeEnterFile() {
 		r.fileFunction = &symbols.Function{
 			Name:     namegen.FileFunction(r.ctx.Filename()),
 			Type:     symbols.MainFunc,
+			Colors:   &palette.ColorContainer{},
 			Called:   symbols.NewFunctions(),
 			CalledBy: symbols.NewFunctions(),
 		}
@@ -90,16 +91,86 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 		r.handleImportExpr(n)
 
 	case *ir.ClassStmt:
-		r.checkColorsInDoc(n.ClassName, n.Doc)
+		r.handleClass(n.ClassName, n.Stmts, n.Doc)
 	case *ir.InterfaceStmt:
-		r.checkColorsInDoc(n.InterfaceName, n.Doc)
+		r.handleClass(n.InterfaceName, n.Stmts, n.Doc)
 	case *ir.TraitStmt:
-		r.checkColorsInDoc(n.TraitName, n.Doc)
-	case *ir.ClassMethodStmt:
-		r.checkColorsInDoc(n.MethodName, n.Doc)
+		r.handleClass(n.TraitName, n.Stmts, n.Doc)
 	case *ir.FunctionStmt:
-		r.checkColorsInDoc(n.FunctionName, n.Doc)
+		r.handleFunction(n.FunctionName, n.Doc)
 	}
+}
+
+func (r *RootChecker) handleFunction(name *ir.Identifier, doc phpdoc.Comment) {
+	classFQN := namegen.FunctionFQN(r.state, name.Value)
+	class, ok := r.globalCtx.Functions.Get(classFQN)
+	if !ok {
+		return
+	}
+
+	colors, errs := r.colorsFromDoc(doc)
+	for _, err := range errs {
+		r.ctx.Report(name, linter.LevelError, "errorColor", err)
+	}
+
+	class.Colors.Colors = colors.Colors
+}
+
+func (r *RootChecker) handleClassMethods(name string, stmts []ir.Node, classColors palette.ColorContainer) {
+	for _, stmt := range stmts {
+		methodNode, ok := stmt.(*ir.ClassMethodStmt)
+		if !ok {
+			continue
+		}
+
+		methodFQN := namegen.Method(name, methodNode.MethodName.Value)
+
+		method, ok := r.globalCtx.Functions.Get(methodFQN)
+		if !ok {
+			continue
+		}
+
+		methodColors, errs := r.colorsFromDoc(methodNode.Doc)
+		for _, err := range errs {
+			r.ctx.Report(methodNode.MethodName, linter.LevelError, "errorColor", err)
+		}
+
+		if !classColors.Empty() {
+			// We need to mix the colors in the following order,
+			// first the class colors and then the method colors.
+			//
+			// If the class has no colors, then there is no point in copying.
+			var newColors palette.ColorContainer
+
+			for _, classColor := range classColors.Colors {
+				newColors.Add(classColor)
+			}
+			for _, methodColor := range methodColors.Colors {
+				newColors.Add(methodColor)
+			}
+
+			methodColors = newColors
+		}
+
+		method.Colors.Colors = methodColors.Colors
+	}
+}
+
+func (r *RootChecker) handleClass(name *ir.Identifier, stmts []ir.Node, doc phpdoc.Comment) {
+	classFQN := namegen.ClassFQN(r.state, name.Value)
+	class, ok := r.globalCtx.Classes.Get(classFQN)
+	if !ok {
+		return
+	}
+
+	colors, errs := r.colorsFromDoc(doc)
+	for _, err := range errs {
+		r.ctx.Report(name, linter.LevelError, "errorColor", err)
+	}
+
+	class.Colors.Colors = colors.Colors
+
+	r.handleClassMethods(classFQN, stmts, colors)
 }
 
 func (r *RootChecker) handlePropertyFetch(n *ir.PropertyFetchExpr, blockScope *meta.Scope, nodePath irutil.NodePath) {
@@ -381,14 +452,7 @@ func (r *RootChecker) handleClassWithoutMethod(static bool, classesWithoutMethod
 	}
 }
 
-func (r *RootChecker) checkColorsInDoc(name ir.Node, doc phpdoc.Comment) {
-	errs := r.getPhpDocColorErrors(doc)
-	for _, err := range errs {
-		r.ctx.Report(name, linter.LevelError, "errorColor", err)
-	}
-}
-
-func (r *RootChecker) getPhpDocColorErrors(comment phpdoc.Comment) (errs []string) {
+func (r *RootChecker) colorsFromDoc(comment phpdoc.Comment) (colors palette.ColorContainer, errs []string) {
 	for _, part := range comment.Parsed {
 		p, ok := part.(*phpdoc.RawCommentPart)
 		if !ok {
@@ -415,9 +479,11 @@ func (r *RootChecker) getPhpDocColorErrors(comment phpdoc.Comment) (errs []strin
 			errs = append(errs, fmt.Sprintf("Color '%s' missing in palette (either a misprint or a new color that needs to be added)", colorName))
 			continue
 		}
+
+		colors.Add(r.palette.GetColorByName(colorName))
 	}
 
-	return errs
+	return colors, errs
 }
 
 func (r *RootChecker) getImportAbsPath(path string) (string, bool) {
