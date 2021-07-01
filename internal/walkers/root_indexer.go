@@ -4,7 +4,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/vkcom/nocolor/internal/palette"
 	"github.com/vkcom/nocolor/internal/symbols"
 	"github.com/vkcom/nocolor/internal/walkers/namegen"
@@ -47,6 +46,7 @@ func (r *RootIndexer) BeforeEnterFile() {
 	r.meta.Functions.Add(&symbols.Function{
 		Name:     namegen.FileFunction(r.ctx.Filename()),
 		Type:     symbols.MainFunc,
+		Colors:   &palette.ColorContainer{},
 		Called:   symbols.NewFunctions(),
 		CalledBy: symbols.NewFunctions(),
 	})
@@ -100,7 +100,7 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 			Name:   name,
 			Type:   symbols.PlainClass,
 			Pos:    r.getElementPos(n),
-			Colors: r.colorsFromDoc(n.Doc),
+			Colors: &palette.ColorContainer{},
 		})
 
 	case *ir.InterfaceStmt:
@@ -110,7 +110,7 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 			Name:   name,
 			Type:   symbols.Interface,
 			Pos:    r.getElementPos(n),
-			Colors: r.colorsFromDoc(n.Doc),
+			Colors: &palette.ColorContainer{},
 		})
 
 	case *ir.TraitStmt:
@@ -120,7 +120,7 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 			Name:   name,
 			Type:   symbols.Trait,
 			Pos:    r.getElementPos(n),
-			Colors: r.colorsFromDoc(n.Doc),
+			Colors: &palette.ColorContainer{},
 		})
 
 	case *ir.ClassMethodStmt:
@@ -132,37 +132,11 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 			typ = symbols.ExternFunc
 		}
 
-		colors := r.colorsFromDoc(n.Doc)
-
-		class, ok := r.meta.Classes.Get(className)
-		if ok {
-			if n.MethodName.Value == "__construct" {
-				class.WithExplicitConstructor = true
-			}
-
-			if !class.Colors.Empty() {
-				// We need to mix the colors in the following order,
-				// first the class colors and then the method colors.
-				//
-				// If the class has no colors, then there is no point in copying.
-				var newColors palette.ColorContainer
-
-				for _, classColor := range class.Colors.Colors {
-					newColors.Add(classColor)
-				}
-				for _, methodColor := range colors.Colors {
-					newColors.Add(methodColor)
-				}
-
-				colors = newColors
-			}
-		}
-
 		r.meta.Functions.Add(&symbols.Function{
 			Name:     methodName,
 			Type:     typ,
 			Pos:      r.getElementPos(n),
-			Colors:   colors,
+			Colors:   &palette.ColorContainer{},
 			Called:   symbols.NewFunctions(),
 			CalledBy: symbols.NewFunctions(),
 		})
@@ -179,7 +153,7 @@ func (r *RootIndexer) BeforeEnterNode(n ir.Node) {
 			Name:     name,
 			Type:     typ,
 			Pos:      r.getElementPos(n),
-			Colors:   r.colorsFromDoc(n.Doc),
+			Colors:   &palette.ColorContainer{},
 			Called:   symbols.NewFunctions(),
 			CalledBy: symbols.NewFunctions(),
 		})
@@ -196,37 +170,4 @@ func (r *RootIndexer) getElementPos(n ir.Node) meta.ElementPosition {
 		EndLine:   int32(pos.EndLine),
 		Length:    int32(pos.EndPos - pos.StartPos),
 	}
-}
-
-func (r *RootIndexer) colorsFromDoc(comment phpdoc.Comment) palette.ColorContainer {
-	var colors palette.ColorContainer
-
-	for _, part := range comment.Parsed {
-		p, ok := part.(*phpdoc.RawCommentPart)
-		if !ok {
-			continue
-		}
-
-		if p.Name() != r.colorTag {
-			continue
-		}
-
-		if len(p.Params) == 0 {
-			continue
-		}
-
-		colorName := p.Params[0]
-
-		if colorName == "transparent" {
-			continue
-		}
-
-		if !r.palette.ColorExists(colorName) {
-			continue
-		}
-
-		colors.Add(r.palette.GetColorByName(colorName))
-	}
-
-	return colors
 }
