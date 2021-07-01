@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -16,6 +17,11 @@ type ConfigRule map[string]string
 // Config is a structure for storing a palette of colors as a config.
 type Config struct {
 	Palette map[string][]ConfigRule
+}
+
+type groupRules struct {
+	name  string
+	rules []ConfigRule
 }
 
 // OpenPaletteFromFile returns a ready-use palette from a file.
@@ -62,10 +68,21 @@ In .yaml syntax, it's a map from a string key (description) to a list (rules)`, 
 func parsePaletteRaw(path string, config *Config) (*Palette, error) {
 	pal := NewPalette()
 
-	for _, group := range config.Palette {
+	groups := make([]groupRules, 0, len(config.Palette))
+	for name, group := range config.Palette {
+		var singleGroup groupRules
+		singleGroup.name = name
+		singleGroup.rules = group
+		groups = append(groups, singleGroup)
+	}
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i].name < groups[j].name
+	})
+
+	for _, group := range groups {
 		var rules []*Rule
 
-		for _, rule := range group {
+		for _, rule := range group.rules {
 			var colorsRaw, desc string
 			for rColor, rDesc := range rule {
 				colorsRaw = rColor
