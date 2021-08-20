@@ -40,7 +40,7 @@ func Check(ctx *cmd.AppContext, globalContext *walkers.GlobalContext) (status in
 	}
 
 	// The main function for analyzing in NoVerify,
-	// in it we collect all the functions of the project.
+	// in it, we collect all the functions of the project.
 	_, err = cmd.Check(ctx)
 	if len(LinterReports) != 0 {
 		HandleShowLinterReports(ctx, LinterReports)

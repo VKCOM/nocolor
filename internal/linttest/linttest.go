@@ -34,7 +34,7 @@ type Suite struct {
 
 // NewSuite returns a new linter test suite for t.
 func NewSuite(t testing.TB) *Suite {
-	conf := linter.NewConfig()
+	conf := linter.NewConfig("8.1")
 	return &Suite{
 		t:      t,
 		config: conf,

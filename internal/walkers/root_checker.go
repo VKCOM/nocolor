@@ -85,6 +85,8 @@ func (r *RootChecker) AfterEnterNode(n ir.Node) {
 		r.handleStaticCall(n, nil)
 	case *ir.MethodCallExpr:
 		r.handleMethodCall(n, nil, r)
+	case *ir.NullsafeMethodCallExpr:
+		r.handleNullsafeMethodCall(n, nil, r)
 	case *ir.PropertyFetchExpr:
 		r.handlePropertyFetch(n, nil, irutil.NodePath{})
 	case *ir.ImportExpr:
@@ -353,6 +355,27 @@ func (r *RootChecker) handleStaticCall(n *ir.StaticCallExpr, blockScope *meta.Sc
 }
 
 func (r *RootChecker) handleMethodCall(n *ir.MethodCallExpr, blockScope *meta.Scope, v ir.Visitor) {
+	method, ok := n.Method.(*ir.Identifier)
+	if !ok {
+		return
+	}
+	methodName := method.Value
+
+	scope := blockScope
+	if scope == nil {
+		scope = r.ctx.Scope()
+	}
+
+	classType := solver.ExprType(scope, r.state, n.Variable)
+
+	r.handleMethod(methodName, classType, false)
+
+	for _, nn := range n.Args {
+		nn.Walk(v)
+	}
+}
+
+func (r *RootChecker) handleNullsafeMethodCall(n *ir.NullsafeMethodCallExpr, blockScope *meta.Scope, v ir.Visitor) {
 	method, ok := n.Method.(*ir.Identifier)
 	if !ok {
 		return
