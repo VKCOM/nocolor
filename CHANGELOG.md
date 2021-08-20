@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## Unreleased
+## `1.1.0` 2021-20-08
 
 Due to the addition of PHP 8 support, now by default all projects will be parsed as **PHP 8**. If your project uses the `real` cast, the `is_real` function, comments like `#[...` or `match` and `enum` keywords, then use the `--php7` flag to make the analyzer parse the project like PHP 7.4.
 
