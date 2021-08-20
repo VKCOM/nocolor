@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ## Unreleased
 
-Due to the addition of PHP 8 support, now by default all projects will be parsed as **PHP 8**. If your project uses the `real` cast, the `is_real` function or comments like `#[...`, then use the `--php7` flag to make the analyzer parse the project like PHP 7.4.
+Due to the addition of PHP 8 support, now by default all projects will be parsed as **PHP 8**. If your project uses the `real` cast, the `is_real` function, comments like `#[...` or `match` and `enum` keywords, then use the `--php7` flag to make the analyzer parse the project like PHP 7.4.
+
+Previously, in order to take into account the `vendor` folder for better type inference, it was necessary to use the `--index-only-files` flag, now the `vendor` folder is added to this flag by default if it exists, so you no longer need to explicitly pass it.
 
 ### Added
 
@@ -15,8 +17,9 @@ Due to the addition of PHP 8 support, now by default all projects will be parsed
 
 - [#19](https://github.com/VKCOM/nocolor/pull/19): Moved to new version of NoVerify:
   - PHP 8 and 8.1 initial support
-  - Minor improvements in type inference for `instanceof`
+  - Improvements in type inference (`instanceof`, `callable` in PHPDoc, `array{}`)
   - Help now has grouping for flags
+  - `vendor` folder is now added by default if it exists
 
 
 ## `1.0.4` 2021-01-07

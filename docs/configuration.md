@@ -2,6 +2,15 @@
 
 This page is dedicated to some technical details.
 
+## How to parse as PHP 7
+
+It looks like this:
+
+```bash
+nocolor check --php7 ./src
+```
+
+By default, all code is parsed as PHP 8, however, some projects use names that have become reserved in PHP 8, so they need to be parsed as PHP 7.
 
 ## How to exclude some folders from checking
 
@@ -16,7 +25,10 @@ The `--index-only-files` option sets paths that won't be analyzed, they will be 
 
 ## How to include the `vendor` folder
 
+>  Since version 1.1, the `vendor` folder is added by default if it exists.
+
 Using the same option:
+
 ```bash
 nocolor check --index-only-files='./vendor' ./src
 ```
