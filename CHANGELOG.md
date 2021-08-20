@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## Unreleased
+
+Due to the addition of PHP 8 support, now by default all projects will be parsed as **PHP 8**. If your project uses the `real` cast, the `is_real` function or comments like `#[...`, then use the `--php7` flag to make the analyzer parse the project like PHP 7.4.
+
+### Added
+
+- [#19](https://github.com/VKCOM/nocolor/pull/19): Added initial support of PHP 8
+- [#19](https://github.com/VKCOM/nocolor/pull/19): Added flag `--php7` for analyze as PHP 7
+
+### Changed
+
+- [#19](https://github.com/VKCOM/nocolor/pull/19): Moved to new version of NoVerify:
+  - PHP 8 and 8.1 initial support
+  - Minor improvements in type inference for `instanceof`
+  - Help now has grouping for flags
+
+
 ## `1.0.4` 2021-01-07
 
 > If you used version **1.0.3** and below, then remove the current cache with the `cache-clear` command.
