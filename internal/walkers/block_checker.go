@@ -46,6 +46,8 @@ func (b *BlockChecker) AfterEnterNode(n ir.Node) {
 		b.root.handleStaticCall(n, b.ctx.Scope())
 	case *ir.MethodCallExpr:
 		b.root.handleMethodCall(n, b.ctx.Scope(), b)
+	case *ir.NullsafeMethodCallExpr:
+		b.root.handleNullsafeMethodCall(n, b.ctx.Scope(), b)
 	case *ir.ImportExpr:
 		b.root.handleImportExpr(n)
 	case *ir.CloneExpr:

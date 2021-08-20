@@ -55,7 +55,7 @@ func DefaultCacheDir() string {
 
 // Main is the function that launches the program.
 func Main() {
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
 	context := walkers.NewGlobalContext(nil)
 
 	status, err := cmd.Run(&cmd.MainConfig{
@@ -108,19 +108,40 @@ func Main() {
 						Description: "Folders or files for analysis",
 					},
 				},
-				RegisterFlags: func(ctx *cmd.AppContext) *flag.FlagSet {
+				RegisterFlags: func(ctx *cmd.AppContext) (*flag.FlagSet, *cmd.FlagsGroups) {
 					flags := &extraCheckFlags{}
 
 					fs := flag.NewFlagSet("check", flag.ContinueOnError)
+					groups := cmd.NewFlagsGroups()
+
+					groups.AddGroup("Color")
+					groups.AddGroup("Language")
+					groups.AddGroup("Files")
+					groups.AddGroup("Additional")
 
 					// We don't need all the flags from NoVerify, so we only register some of them.
 					fs.IntVar(&ctx.ParsedFlags.MaxFileSize, "max-sum-filesize", 10*1024*1024, "Max total file size to be parsed concurrently in bytes (limits max memory consumption)")
 					fs.IntVar(&ctx.ParsedFlags.MaxConcurrency, "cores", runtime.NumCPU(), "Max number of cores to use")
-					fs.BoolVar(&ctx.ParsedFlags.DisableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
 					fs.StringVar(&ctx.ParsedFlags.StubsDir, "stubs-dir", "", "Directory with custom phpstorm-stubs")
 					fs.StringVar(&ctx.ParsedFlags.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
+					fs.BoolVar(&ctx.ParsedFlags.DisableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
+
+					groups.Add("Additional", "cores")
+					groups.Add("Additional", "cache-dir")
+					groups.Add("Additional", "disable-cache")
+					groups.Add("Additional", "max-sum-filesize")
+					groups.Add("Additional", "stubs-dir")
+
 					fs.StringVar(&ctx.ParsedFlags.IndexOnlyFiles, "index-only-files", "", "Comma-separated list of paths to files, which should be indexed, but not analyzed")
 					fs.StringVar(&ctx.ParsedFlags.PhpExtensionsArg, "php-exts", "php,inc,php5,phtml", "List of PHP file extensions to be analyzed")
+					fs.StringVar(&flags.Output, "output", "", "Path to the file where the errors will be written in JSON format")
+
+					groups.Add("Files", "index-only-files")
+					groups.Add("Files", "php-exts")
+					groups.Add("Files", "output")
+
+					fs.BoolVar(&ctx.ParsedFlags.PHP7, "php7", false, "Analyze as PHP 7")
+					groups.Add("Language", "php7")
 
 					// Some values need to be set manually.
 					ctx.ParsedFlags.AllowAll = true
@@ -128,10 +149,12 @@ func Main() {
 
 					fs.StringVar(&flags.PaletteSrc, "palette", "palette.yaml", "File with color palette")
 					fs.StringVar(&flags.ColorTag, "tag", "color", "The tag to be used to set the color in PHPDoc")
-					fs.StringVar(&flags.Output, "output", "", "Path to the file where the errors will be written in JSON format")
+
+					groups.Add("Color", "palette")
+					groups.Add("Color", "tag")
 
 					ctx.CustomFlags = flags
-					return fs
+					return fs, groups
 				},
 				Action: func(ctx *cmd.AppContext) (int, error) {
 					return Check(ctx, context)

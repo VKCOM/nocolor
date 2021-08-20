@@ -1,5 +1,7 @@
-github.com/VKCOM/noverify v0.3.1-0.20210630212848-6a7e948f7581 h1:MQ+VZYed8J0Ocd0tgqFNsjaPI8S0ueObTHX3wrLExOA=
-github.com/VKCOM/noverify v0.3.1-0.20210630212848-6a7e948f7581/go.mod h1:g0IgAUfjZ9Z3v+nKj+jRyBnBiWHE3O8f7ZLrRlVHk+k=
+github.com/VKCOM/noverify v0.4.1-0.20210820112310-17cd2560f7a0 h1:Wn6Rf+DdoOPRpODjVSfQqMTvQM7DAkRkJXvepB6c0GY=
+github.com/VKCOM/noverify v0.4.1-0.20210820112310-17cd2560f7a0/go.mod h1:4YqmJFxSi6Hw7kBiUZ7GzeQgqHLyxEopsSVhIf9/htA=
+github.com/VKCOM/php-parser v0.8.0-rc.2.0.20210802093708-d85f5a481602 h1:FYasGDmh13Lr5zwqIkxoYZsr/YlEIMTIpqzIu/syeYY=
+github.com/VKCOM/php-parser v0.8.0-rc.2.0.20210802093708-d85f5a481602/go.mod h1:wLtaD4M5K8bJPwjkl4BVone8dbMiG1OApbMKdjubCEw=
 github.com/client9/misspell v0.3.4 h1:ta993UF76GwbvJcIo3Y68y/M3WxlpEHPWIGDkJYwzJI=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
@@ -11,8 +13,6 @@ github.com/gookit/color v1.3.2 h1:WO8+16ZZtx+HlOb6cueziUAF8VtALZKRr/jOvuDk0X0=
 github.com/gookit/color v1.3.2/go.mod h1:R3ogXq2B9rTbXoSHJ1HyUVAZ3poOJHpd9nQmyGZsfvQ=
 github.com/i582/cfmt v1.3.0 h1:UQWMxXt5+iAAtWLD8XUjjGcHCvLM2tRjarvUQs6Ij5o=
 github.com/i582/cfmt v1.3.0/go.mod h1:tpHWAxhE4Y7yy7sliaNe0pnnEs1SZe67KLljyOlEYI8=
-github.com/karrick/godirwalk v1.15.6 h1:Yf2mmR8TJy+8Fa0SuQVto5SYap6IF7lNVX4Jdl8G1qA=
-github.com/karrick/godirwalk v1.15.6/go.mod h1:j4mkqPuvaLI8mp1DroR3P6ad7cyYd4c1qeJ3RV7ULlk=
 github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 h1:n6/2gBQ3RWajuToeY6ZtZTIKv2v7ThUy5KKusIT0yc0=
 github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00/go.mod h1:Pm3mSP3c5uWn86xMLZ5Sa7JB9GsEZySvHYXCTK4E9q4=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
@@ -26,8 +26,6 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/yookoala/realpath v1.0.0/go.mod h1:gJJMA9wuX7AcqLy1+ffPatSCySA1FQ2S8Ya9AIoYBpE=
-github.com/z7zmey/php-parser v0.8.0-rc.1.0.20210213215434-367eff9de651 h1:gDfdOvHmWWFqE/LltouUfWGq7Z3PvR4OoOr3ZRwa9J4=
-github.com/z7zmey/php-parser v0.8.0-rc.1.0.20210213215434-367eff9de651/go.mod h1:aae81kYAwd9gCu7qaA7neWjT77MIRtjPqpkXFzSkKIQ=
 go.lsp.dev/uri v0.3.0/go.mod h1:P5sbO1IQR+qySTWOCnhnK7phBx+W3zbLqSMDJNTw88I=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
