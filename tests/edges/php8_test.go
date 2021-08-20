@@ -11,8 +11,6 @@ func TestPHP8NullsafeMethodCall(t *testing.T) {
 
 	suite.Palette = defaultPalette
 	suite.AddFile(`<?php
-<?php
-
 class Foo {
     /**
      * @color red
